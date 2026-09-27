@@ -194,8 +194,31 @@ def urls(cfg):
     return {
         "out": gf_url(f"One way flights to {d} from {o} on {cfg['depart_date']} {a} adults"),
         "ret": gf_url(f"One way flights to {o} from {d} on {cfg['return_date']} {a} adults"),
-        "rt": gf_url(f"Flights to {d} from {o} on {cfg['depart_date']} through {cfg['return_date']} {a} adults"),
+        # 來回先試「<代碼> airport」：「Flights to KMQ from TPE」會被 Google 當成昆明 KMG；
+        # 但 KIX 反而要用原本的寫法才載得出來，所以兩種都留，由 header_ok 檢查解析結果
+        "rt": gf_url(f"Flights to {d} airport from {o} on {cfg['depart_date']} through {cfg['return_date']} {a} adults"),
+        "rt_alt": gf_url(f"Flights to {d} from {o} on {cfg['depart_date']} through {cfg['return_date']} {a} adults"),
     }
+
+
+def header_ok(text: str, origin: str, dest: str) -> bool:
+    """搜尋列（「航班搜尋 來回 2 經濟艙 臺北市 小松市 KMQ …」）要出現目的地代碼，避免查到別的機場。"""
+    i = text.find("航班搜尋")
+    return i >= 0 and re.search(rf"\b{re.escape(dest)}\b", text[i:i + 80]) is not None
+
+
+def collect(load):
+    """依序載入 out／ret／rt 三頁；單頁失敗（逾時、查不到）只記錄，不讓其他頁的結果一起作廢。"""
+    got = {}
+    for key in ("out", "ret", "rt"):
+        try:
+            got[key] = load(key)
+        except Exception as e:
+            print(f"  {key} 頁失敗：{str(e).splitlines()[0][:120]}", file=sys.stderr)
+            got[key] = []
+    if not any(got.values()):
+        raise SystemExit("Google Flights 三個查詢頁都失敗（頁面格式或網路問題）。")
+    return got
 
 
 READ_LABELS = """() => [...new Set([...document.querySelectorAll('li div[aria-label]')]
@@ -205,11 +228,16 @@ EXPAND = """() => { const b=[...document.querySelectorAll('button')]
     .find(x => /更多航班/.test(x.innerText||'')); if (b) { b.click(); return true } return false }"""
 
 
-def load_results(page, url: str) -> list[str]:
+def load_results(page, url: str, cfg: dict | None = None) -> list[str]:
     page.goto(url, wait_until="domcontentloaded", timeout=60000)
     accept_consent(page)
     page.wait_for_selector("li div[aria-label*='新台幣']", timeout=30000)
     page.wait_for_timeout(1500)
+    if cfg:
+        head = page.evaluate("() => document.body.innerText.replace(/\\s+/g, ' ')")
+        if not header_ok(head, cfg["origin"], cfg["destination"]):
+            i = head.find("航班搜尋")
+            raise RuntimeError(f"Google 把目的地解析錯了：{head[i:i + 40]}")
     if page.evaluate(EXPAND):
         page.wait_for_timeout(2500)
     return page.evaluate(READ_LABELS)
@@ -239,9 +267,11 @@ def returns_for(page, rt_url: str, out_label: str) -> list[dict]:
         out_label)
     if not clicked:
         return []
+    # 點了去程後清單會換成回程：等到清單裡不再有原本那個去程航班（不寫死機場名稱）
     page.wait_for_function(
-        "() => [...document.querySelectorAll('li div[aria-label]')].some(e => (e.getAttribute('aria-label')||'').includes('於關西國際機場出發'))",
-        timeout=30000)
+        """(lbl) => { const l=[...document.querySelectorAll("li div[aria-label*='新台幣']")].map(e => e.getAttribute('aria-label'));
+                      return l.length > 0 && !l.includes(lbl) }""",
+        arg=out_label, timeout=30000)
     page.wait_for_timeout(1500)
     return [f for f in map(parse_label, page.evaluate(READ_LABELS)) if f]
 
@@ -286,16 +316,32 @@ def _scrape(cfg, fixture: Path | None):
                     page.goto(fx.as_uri())
                     rt_pairs += [(f, r) for r in map(parse_label, page.evaluate(READ_LABELS)) if r]
         else:
-            outs = [f for f in map(parse_label, load_results(page, u["out"])) if f]
-            time.sleep(2)
-            rets = [f for f in map(parse_label, load_results(page, u["ret"])) if f]
-            time.sleep(2)
-            rt_out = [f for f in map(parse_label, load_results(page, u["rt"])) if f]
+            rt_used = {}  # 來回頁實際成功的網址，選回程時要用同一個
+
+            def load(key):
+                if key != "out":
+                    time.sleep(2)
+                tries = [u["rt"], u["rt_alt"]] if key == "rt" else [u[key], u[key]]  # 單程：同網址重試一次
+                for i, url in enumerate(tries):
+                    try:
+                        labels = load_results(page, url, cfg)
+                        rt_used[key] = url
+                        return labels
+                    except Exception as e:
+                        if i == len(tries) - 1:
+                            raise
+                        print(f"  {key} 頁重試：{str(e).splitlines()[0][:80]}", file=sys.stderr)
+                        time.sleep(2)
+
+            got = collect(load)
+            outs = [f for f in map(parse_label, got["out"]) if f]
+            rets = [f for f in map(parse_label, got["ret"]) if f]
+            rt_out = [f for f in map(parse_label, got["rt"]) if f]
             rt_pairs = []
             candidates = [f for f in dedupe(rt_out) if ok_outbound(cfg, f)]
-            for f in candidates[:10]:
+            for f in candidates[:cfg.get("rt_max_candidates", 10)]:  # 每個要重開來回頁，快速規劃時調低
                 try:
-                    rt_pairs += [(f, r) for r in returns_for(page, u["rt"], f["label"])]
+                    rt_pairs += [(f, r) for r in returns_for(page, rt_used.get("rt", u["rt"]), f["label"])]
                 except Exception as e:  # 單一航班失敗不影響整體
                     print(f"  略過 {f['airline']} {f['dep']}: {e}", file=sys.stderr)
                 time.sleep(2)
