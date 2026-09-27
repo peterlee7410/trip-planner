@@ -38,6 +38,8 @@ header.top p{margin:0;color:var(--muted);font-size:13px;max-width:62ch}
 .layout{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:20px;align-items:start}
 @media (max-width:860px){.layout{grid-template-columns:minmax(0,1fr)}}
 aside.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);display:grid;gap:14px}
+/* 桌面：左側條件面板固定在畫面上且可自己捲動（面板比螢幕高時，下半部才捲得到），捲到底不帶動右邊頁面 */
+@media (min-width:861px){aside.panel{max-height:calc(100vh - 24px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;align-content:start;scrollbar-gutter:stable}}
 @media (max-width:860px){aside.panel{position:static}}
 .ticket-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--accent);border-bottom:1px dashed var(--line);padding-bottom:8px}
 .field{display:grid;gap:4px}
