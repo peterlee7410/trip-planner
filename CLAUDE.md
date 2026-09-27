@@ -27,7 +27,7 @@
 
 ## 開發慣例
 - Windows 上用 `py` 或 `python`；終端機中文亂碼時先設 `PYTHONIOENCODING=utf-8`。
-- 測試：`python tracker.py --fixture tests/fixtures --dry-run`（應印出 15 筆）、`python trips/validate.py`。
+- 測試：`python -m pytest tests`、`python tracker.py --fixture tests/fixtures --dry-run`（應印出 15 筆）、`python trips/validate.py`。
 - 改網頁：改 `src/` → `python build.py` → `python -m http.server 8000` 開 `http://localhost:8000/?trip=<slug>`，檢查無 JS 錯誤、390px 手機寬度沒有橫向捲動。
 - Git：先 `git pull --rebase` 再 push（Actions 也會 commit）；禁止 force push。
 - 回報格式：一兩句說明改了什麼＋「日期｜建議｜備註」短表＋使用者要自己處理的事（劃位、預約）＋Sources。

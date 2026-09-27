@@ -131,17 +131,18 @@ def scrape(cfg):
                     res["jalan"] = {"error": str(e)[:200]}
                 time.sleep(2)
             if h.get("booking"):
+                bpage = ctx.new_page()
                 try:
-                    bpage = ctx.new_page()
                     bpage.set_extra_http_headers({"Accept-Language": "zh-TW,zh;q=0.9"})
                     bpage.goto(booking_url(h, cfg), wait_until="domcontentloaded", timeout=60000)
                     bpage.wait_for_selector('[data-testid="property-card"]', timeout=30000)
                     bpage.wait_for_timeout(2500)
                     res["booking"] = bpage.evaluate(BOOKING_JS, h["booking"]["match"])
                     res["booking"]["url"] = booking_url(h, cfg)
-                    bpage.close()
                 except Exception as e:
                     res["booking"] = {"error": str(e)[:200]}
+                finally:
+                    bpage.close()  # 逾時的分頁也要關，否則之後每間飯店都多開一頁
                 time.sleep(2)
             out[h["id"]] = res
             print(f"  {h['id']}: {json.dumps(brief(res), ensure_ascii=False)}")
@@ -150,9 +151,20 @@ def scrape(cfg):
 
 
 def brief(res):
-    j, b = res.get("jalan") or {}, res.get("booking") or {}
-    return {"jalan": j.get("error") or (j.get("min") if j.get("available") else f"客滿({j.get('calendar')})"),
-            "booking": b.get("error") or (b.get("price") if b.get("found") and not b.get("soldOut") else "無房/未找到")}
+    out = {}
+    if "jalan" in res:
+        j = res["jalan"] or {}
+        out["jalan"] = j.get("error") or (j.get("min") if j.get("available") else f"客滿({j.get('calendar')})")
+    if "booking" in res:
+        b = res["booking"] or {}
+        out["booking"] = b.get("error") or (b.get("price") if b.get("found") and not b.get("soldOut") else "無房/未找到")
+    return out
+
+
+def any_success(cur):
+    """至少有一間飯店的至少一個來源查詢成功（沒設定的來源不算成功）。"""
+    return any(src in res and not (res[src] or {}).get("error")
+               for res in cur.values() for src in ("jalan", "booking"))
 
 
 def best_twd(cfg, res):
@@ -167,18 +179,24 @@ def best_twd(cfg, res):
     return min(cands) if cands else (None, None)
 
 
+def has_error(res):
+    """任一來源查詢失敗：這次查不到價不代表客滿。"""
+    return any((v or {}).get("error") for v in (res or {}).values())
+
+
 def alerts(cfg, cur, prev):
     msgs = []
     names = {h["id"]: h["nameZh"] for h in cfg["hotels"]}
     for hid, res in cur.items():
+        pres = (prev or {}).get(hid) or {}
         now_twd, src = best_twd(cfg, res)
-        before_twd, _ = best_twd(cfg, (prev or {}).get(hid, {})) if prev else (None, None)
-        j, pj = res.get("jalan") or {}, ((prev or {}).get(hid) or {}).get("jalan") or {}
-        if prev and now_twd and before_twd is None:
+        before_twd, _ = best_twd(cfg, pres) if prev else (None, None)
+        j, pj = res.get("jalan") or {}, pres.get("jalan") or {}
+        if prev and now_twd and before_twd is None and not has_error(pres):
             msgs.append(f"🟢 {names[hid]} 出現空房：約 NT${now_twd:,}（{src}）")
         elif now_twd and before_twd and before_twd - now_twd >= cfg["alert_drop_jpy"] * cfg["jpy_to_twd"]:
             msgs.append(f"📉 {names[hid]} 降價：NT${before_twd:,} → NT${now_twd:,}（{src}）")
-        elif prev and now_twd is None and before_twd:
+        elif prev and now_twd is None and before_twd and not has_error(res):
             msgs.append(f"🔴 {names[hid]} 已客滿（上次約 NT${before_twd:,}）")
         if j.get("roomsLeft") == 1 and pj.get("roomsLeft", 9) != 1:
             msgs.append(f"⏳ {names[hid]} じゃらん只剩 1 間")
@@ -223,8 +241,7 @@ def main():
         print(m)
     if args.dry_run:
         return
-    ok = any(not (r.get("jalan") or {}).get("error") for r in cur.values())
-    if not ok:
+    if not any_success(cur):
         raise SystemExit("所有飯店都查詢失敗（可能被網站擋下），這次不寫入。")
     hist.append({"checkedAt": now.strftime("%Y-%m-%dT%H:%M"), "hotels": cur})
     hist = hist[-cfg["keep_history"]:]

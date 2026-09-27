@@ -1,6 +1,7 @@
 ---
 name: flight-scout
 description: 查指定行程的機票：航線、航空公司時刻、票價與行李費，產生 tracker.py 的 config.json 並實跑一次。/plan-trip 會呼叫；也可單獨用於「幫我查某日期機票」。
+model: sonnet
 tools: Read, Write, Edit, Bash, WebSearch, WebFetch, Glob, Grep
 ---
 

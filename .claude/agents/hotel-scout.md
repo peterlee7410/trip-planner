@@ -1,6 +1,7 @@
 ---
 name: hotel-scout
 description: 依每晚所在城市找住宿區域與 2–3 間候選，實查空房與含稅總價，產生 hotel_tracker.py 的 hotels.json 與 Agoda/じゃらん/Booking 連結。/plan-trip 會呼叫。
+model: sonnet
 tools: Read, Write, Edit, Bash, WebSearch, WebFetch, Glob, Grep
 ---
 

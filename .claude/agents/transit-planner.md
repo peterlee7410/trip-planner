@@ -1,6 +1,7 @@
 ---
 name: transit-planner
 description: 為每天的移動段落查官方時刻表，挑 2–4 班重點車並標示建議班次、車次、月台，以及票券是否划算。/plan-trip 會呼叫。
+model: sonnet
 tools: Read, Write, Edit, Bash, WebSearch, WebFetch, Glob, Grep
 ---
 

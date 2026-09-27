@@ -1,6 +1,7 @@
 ---
 name: local-scout
 description: 查旅遊期間的景點營業時間、門票、季節活動與祭典、夜間活動、平價美食與寄物櫃，並排出每日順序。/plan-trip 會呼叫。
+model: sonnet
 tools: Read, Write, WebSearch, WebFetch, Glob, Grep
 ---
 
