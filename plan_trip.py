@@ -96,7 +96,10 @@ def draft_prompt(a):
 4. 價格用一般水準估計，寧可略高；costs 不含機票、住宿、餐費；local 一律是數字，optional 一律是 boolean。
 5. 字數精簡：items 每天 3–6 條、每條 40 字內；food 與 tips 各最多 3 條。
 6. stays 每段另加 "station"：住宿區域最近的鐵路車站，用當地語言正式站名（例：金沢駅、京都駅），給住宿搜尋用。
-7. flights.arriveAirport／departAirport 用 IATA 三碼，選 {a.origin} 有直飛、離目的地最方便的機場。"""
+7. flights.arriveAirport／departAirport 用 IATA 三碼，選 {a.origin} 有直飛、離目的地最方便的機場。
+8. flights 另加 "airportOptions"：1–2 個 {a.origin} 有直飛的候選機場（第一個＝arriveAirport），每個
+   {{"code":"IATA","groundMinutes":到住宿區的單程分鐘,"groundLocalPerPerson":單程每人當地幣,"groundRoute":"路線"}}；
+   例如金澤可比較小松 KMQ（巴士 40 分）與關西 KIX（鐵路約 3 小時）。程式會實查兩邊機票，連同交通時間與費用一起比較。"""
 
 
 def make_draft(a, d):
@@ -154,43 +157,67 @@ def scout_prompt(name, a, minutes):
                          calls=calls, first=max(3, calls // 2), name=name, fmt=fmt) + "\n任務：" + task
 
 
-PICK_STAYS = """你是住宿挑選員。旅程初稿在 trips/{slug}/trip.json，每一晚的じゃらん實查清單在 trips/{slug}/research/jalan-*.json
-（total＝整段住宿、{rooms} 間房、{adults} 位大人的含稅總價；walkMin＝到車站步行分鐘；shared＝共用衛浴或膠囊）。
+PICK_STAYS = """你是住宿挑選員。旅程初稿在 trips/{slug}/trip.json，每一晚的合格住宿清單在 trips/{slug}/research/jalan-pool-*.json
+（程式已排除共用衛浴、膠囊與步行超過 20 分的郊外旅館，依價格排序；total＝整段住宿、{rooms} 間房、{adults} 位大人的含稅總價；
+stationWalk＝從車站步行分鐘、busMin＝從車站搭巴士分鐘，細節看 access）。住宿預算約每晚 {cur} {per_night:,}（全員）。
 不要上網，只讀這些檔案。{minutes} 分鐘內完成。
-每段 stays 從清單挑 2–3 間：交通方便（walkMin 小或 access 寫得到景點近）、非 shared、在合理價位；排除車程 30 分鐘以上的郊外旅館。
+每段 stays 挑 2–3 間：第一間一定是清單最便宜的那間；其餘在最便宜那間 1.6 倍價格內，選地點或評分較好的；
+note 寫出和預算的差距，以及和最便宜那間比好在哪裡。清單是空的那段，才從 research/jalan-<日期>.json 全清單挑。
 寫 trips/{slug}/research/stays.patch.json：{{"stays": [與 trip.json stays 同結構；candidates 的 name 用清單名稱，
 estLocalPerNight = total ÷ 晚數 ÷ 房數（整數），jalanUrl = 清單的 url，yad = 清單的 yad，
 note = "じゃらん <checkedAt> 實查，含稅最低方案" 加上步行或交通重點]}}
 寫完就結束，回覆一句話即可。"""
 
 
-def run_flight_prices(a, d, t):
-    """用 tracker.py（Google Flights）實查機票，結果寫進 <trip>/data/history.json。"""
+def airport_options(t):
     f = t.get("flights") or {}
-    dest = (f.get("arriveAirport") or "").strip().upper()
-    if not re.fullmatch(r"[A-Z]{3}", dest):
-        log(f"機票實查：初稿沒有有效的抵達機場（{dest!r}），略過")
-        return None
-    cfg = {"trip_name": f"{a.origin} ⇄ {dest}", "origin": a.origin, "destination": dest,
-           "depart_date": a.start, "return_date": a.end, "adults": a.travelers,
-           "outbound_arrive_by": a.arrive_by, "return_depart_after": a.depart_after,
-           "bags_outbound": a.bags, "bags_return": a.bags,
-           "target_total": a.budget, "alert_below": int(a.budget * 0.7), "alert_drop": 500,
-           "rt_max_candidates": 4}
-    (d / "config.json").write_text(json.dumps(cfg, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    opts = [o for o in (f.get("airportOptions") or []) if re.fullmatch(r"[A-Z]{3}", str(o.get("code", "")).upper())]
+    main = (f.get("arriveAirport") or "").strip().upper()
+    if re.fullmatch(r"[A-Z]{3}", main) and main not in [str(o["code"]).upper() for o in opts]:
+        opts.insert(0, {"code": main})
+    return {str(o["code"]).upper(): o for o in opts[:2]}
+
+
+def flight_config(a, dest):
+    return {"trip_name": f"{a.origin} ⇄ {dest}", "origin": a.origin, "destination": dest,
+            "depart_date": a.start, "return_date": a.end, "adults": a.travelers,
+            "outbound_arrive_by": a.arrive_by, "return_depart_after": a.depart_after,
+            "bags_outbound": a.bags, "bags_return": a.bags,
+            "target_total": a.budget, "alert_below": int(a.budget * 0.7), "alert_drop": 500,
+            "rt_max_candidates": 4}
+
+
+def price_airport(a, d, code):
+    """tracker.py 查一個機場，放在 research/fl-<代碼>/（選定後才複製成正式追蹤設定）。"""
+    w = d / "research" / f"fl-{code}"
+    w.mkdir(parents=True, exist_ok=True)
+    (w / "config.json").write_text(json.dumps(flight_config(a, code), ensure_ascii=False, indent=1) + "\n",
+                                   encoding="utf-8")
     try:
-        r = subprocess.run([sys.executable, "tracker.py", "--trip", str(d)], cwd=ROOT, timeout=a.tool_timeout,
-                           env={**os.environ, "PYTHONIOENCODING": "utf-8"}, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        r = subprocess.run([sys.executable, "tracker.py", "--trip", str(w)], cwd=ROOT, timeout=a.tool_timeout,
+                           env={**os.environ, "PYTHONIOENCODING": "utf-8"}, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace")
     except subprocess.TimeoutExpired:
-        log("機票實查：逾時")
+        log(f"機票實查 {code}：逾時")
         return None
-    hist = d / "data" / "history.json"
+    hist = w / "data" / "history.json"
     if r.returncode or not hist.exists():
-        log(f"機票實查：沒有結果（{(r.stdout + r.stderr).strip().splitlines()[-1:] or '無輸出'}）")
+        log(f"機票實查 {code}：沒有結果（{(r.stdout + r.stderr).strip().splitlines()[-1:] or '無輸出'}）")
         return None
     last = json.loads(hist.read_text(encoding="utf-8"))[-1]
-    log(f"機票實查：{len(last['options'])} 個組合，最低 NT${last['options'][0]['totalEst']:,}")
+    log(f"機票實查 {code}：{len(last['options'])} 個組合，最低 NT${last['options'][0]['totalEst']:,}")
     return last
+
+
+def run_flight_prices(a, d, t):
+    """每個候選機場平行跑 tracker.py（Google Flights）；回傳 {代碼: 最新一次結果}。"""
+    info = airport_options(t)
+    if not info:
+        log("機票實查：初稿沒有有效的機場代碼，略過")
+        return {}
+    with cf.ThreadPoolExecutor(len(info)) as ex:
+        res = dict(zip(info, ex.map(lambda c: price_airport(a, d, c), info)))
+    return {c: r for c, r in res.items() if r}
 
 
 def run_jalan(a, d, t):
@@ -213,9 +240,35 @@ def run_jalan(a, d, t):
             continue
         (d / "research" / f"jalan-{s['checkin']}.json").write_text(
             json.dumps(r, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-        log(f"住宿實查 {st} {s['checkin']}：{len(r['hotels'])} 間有空房")
+        pool = {**r, "hotels": hotel_pool(r["hotels"])[:12]}
+        (d / "research" / f"jalan-pool-{s['checkin']}.json").write_text(
+            json.dumps(pool, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        log(f"住宿實查 {st} {s['checkin']}：{len(r['hotels'])} 間有空房，合格 {len(pool['hotels'])} 間")
         ok += 1
     return ok
+
+
+def hotel_pool(hotels, max_walk=15, max_bus=25):
+    """合格住宿：非共用衛浴，而且「從車站步行 max_walk 分內」或「搭巴士 max_bus 分內」；依價格排序。
+    只寫車程的交流道旁、郊外溫泉會被排除。沒有 stationWalk 欄位的舊資料退回用 walkMin ≤ 20。"""
+    def ok(h):
+        if h.get("shared"):
+            return False
+        if "stationWalk" not in h:
+            return h.get("walkMin") is not None and h["walkMin"] <= 20
+        return ((h["stationWalk"] is not None and h["stationWalk"] <= max_walk)
+                or (h.get("busMin") is not None and h["busMin"] <= max_bus))
+    return sorted(filter(ok, hotels), key=lambda h: h["total"])
+
+
+def pick_hotels(pool, n=3, cap=1.6):
+    """一定包含最便宜的合格住宿；其餘在它 cap 倍價格內，評分高的優先。"""
+    if not pool:
+        return []
+    cheapest = pool[0]
+    rest = [h for h in pool[1:] if h["total"] <= cheapest["total"] * cap]
+    rest.sort(key=lambda h: (-(h.get("rating") or 0), h["total"]))
+    return [cheapest] + rest[:n - 1]
 
 
 def auto_pick_stays(a, d, t):
@@ -228,14 +281,14 @@ def auto_pick_stays(a, d, t):
             stays.append(s)
             continue
         r = json.loads(f.read_text(encoding="utf-8"))
-        pool = [h for h in r["hotels"] if not h["shared"]]
-        near = [h for h in pool if h.get("walkMin") is not None and h["walkMin"] <= 15]
-        pick = sorted(near or pool, key=lambda h: h["total"])[:3]
+        pick = pick_hotels(hotel_pool(r["hotels"])) or sorted(
+            [h for h in r["hotels"] if not h["shared"]], key=lambda h: h["total"])[:3]
         stays.append({**s, "candidates": [{
             "name": h["name"], "estLocalPerNight": round(h["total"] / r["nights"] / rooms), "yad": h["yad"],
             "jalanUrl": h["url"],
             "note": f"じゃらん {r['checkedAt'].replace('T', ' ')} 實查，含稅最低方案"
-                    + (f"；{s.get('station', '')}步行約 {h['walkMin']} 分" if h.get("walkMin") else "")}
+                    + (f"；{s.get('station', '')}步行約 {h['stationWalk']} 分" if h.get("stationWalk")
+                       else f"；{s.get('station', '')}搭巴士約 {h['busMin']} 分" if h.get("busMin") else "")}
             for h in pick] or s["candidates"]})
     return {"stays": stays}
 
@@ -244,7 +297,10 @@ def run_stays(a, d, t, deadline_at):
     if run_jalan(a, d, t):
         left = deadline_at - time.monotonic() - a.merge_reserve
         rooms = max(1, -(-a.travelers // 2))
-        prompt = PICK_STAYS.format(slug=a.slug, rooms=rooms, adults=a.travelers, minutes=max(1, int(left // 60)))
+        nights = max(1, (dt.date.fromisoformat(a.end) - dt.date.fromisoformat(a.start)).days)
+        per_night = round(a.budget * a.hotel_share / nights / float(t.get("localToTwd") or 0.21))
+        prompt = PICK_STAYS.format(slug=a.slug, rooms=rooms, adults=a.travelers, minutes=max(1, int(left // 60)),
+                                   cur=t.get("currency", "JPY"), per_night=per_night)
         _, to = run_claude(prompt, left, ("Read", f"Write(trips/{a.slug}/research/*)"))
         pf = d / "research" / "stays.patch.json"
         if to or not pf.exists():
@@ -360,39 +416,135 @@ def write_hotel_tracking(a, d, path):
     path.write_text(json.dumps(t, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
 
-def apply_flight_price(d, last):
-    """用 Google Flights 實查結果覆寫機票價格與建議班機（AI 查到的價格不採用）。"""
+def usable_hours(start, arr, end, dep, ground_min, day=(8, 22)):
+    """在目的地可用的白天時數：落地 +1h 通關 + 進城時間，到起飛 −2h − 去機場時間；每天只算 day 區間。"""
+    t = lambda d, hm: dt.datetime.fromisoformat(f"{d}T{hm}")
+    ready = t(start, arr) + dt.timedelta(minutes=60 + ground_min)
+    leave = t(end, dep) - dt.timedelta(minutes=120 + ground_min)
+    total, cur = 0.0, dt.date.fromisoformat(start)
+    while cur <= dt.date.fromisoformat(end):
+        lo = max(ready, dt.datetime.combine(cur, dt.time(day[0])))
+        hi = min(leave, dt.datetime.combine(cur, dt.time(day[1])))
+        total += max(0.0, (hi - lo).total_seconds() / 3600)
+        cur += dt.timedelta(days=1)
+    return total
+
+
+def feasible(start, arr, end, dep, ground_min, latest="23:00", earliest="07:00"):
+    """到得了、回得去：落地 +1h 通關 + 進城要在 latest 前到住宿地；去機場要在 earliest 之後出發（末班／首班車）。"""
+    t = lambda d, hm: dt.datetime.fromisoformat(f"{d}T{hm}")
+    ready = t(start, arr) + dt.timedelta(minutes=60 + ground_min)
+    leave = t(end, dep) - dt.timedelta(minutes=120 + ground_min)
+    return ready <= t(start, latest) and leave >= t(end, earliest)
+
+
+def choose_flight(by_airport, info, start, end, travelers, fx, hour_value, allow_redeye=False):
+    """跨機場比較：分數 = 機票 + 機場⇄市區來回交通 − 可用時數 × 每小時價值（全員、台幣），越低越好。
+    排除：到不了住宿地或回不了機場的班次（末班／首班車）；紅眼班（前一晚沒得睡，除非 allow_redeye）。
+    全部都被排除時，保留分數最好的一班並在 warning 說明。"""
+    every = [o for last in by_airport.values() for o in last.get("options", [])]
+    skip_red = not allow_redeye and any("紅眼" not in (o.get("note") or "") for o in every)
+    ok, fallback = None, None
+    for code, last in by_airport.items():
+        g = info.get(code) or {}
+        gmin, glocal = int(g.get("groundMinutes") or 60), float(g.get("groundLocalPerPerson") or 0)
+        ground_twd = round(glocal * travelers * 2 * fx)
+        for o in last.get("options", []):
+            if skip_red and "紅眼" in (o.get("note") or ""):
+                continue
+            m1 = re.search(r"\d\d:\d\d→(\d\d:\d\d)", o["out"])
+            m2 = re.search(r"(\d\d:\d\d)→", o["ret"])
+            if not (m1 and m2):
+                continue
+            hours = usable_hours(start, m1[1], end, m2[1], gmin)
+            c = {"airport": code, "option": o, "hours": hours, "groundTwd": ground_twd, "groundMinutes": gmin,
+                 "score": o["totalEst"] + ground_twd - hour_value * hours, "checkedAt": last["checkedAt"]}
+            if feasible(start, m1[1], end, m2[1], gmin):
+                ok = c if ok is None or c["score"] < ok["score"] else ok
+            elif fallback is None or c["score"] < fallback["score"]:
+                fallback = c
+    if ok or not fallback:
+        return ok
+    fallback["warning"] = (f"沒有班次能在 23:00 前到住宿地並在 07:00 後出發去機場（地面交通約 {fallback['groundMinutes']} 分），"
+                           "這班需要自行安排過夜或計程車")
+    return fallback
+
+
+def apply_flight_price(d, pick, compare=()):
+    """用 choose_flight 選出的班機覆寫機票價格與建議（AI 查到的價格不採用）。compare：各機場最佳方案的說明行。"""
     path = d / "trip.json"
     t = json.loads(path.read_text(encoding="utf-8"))
     f = t.setdefault("flights", {})
-    if not last:
+    if not pick:
         f["advice"] = "票價未能實查，為估算。" + (f.get("advice") or "")
         path.write_text(json.dumps(t, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
         return False
-    opts = last["options"]
-    best = next((o for o in opts if "紅眼" not in o["note"]), opts[0])
+    best, code = pick["option"], pick["airport"]
 
     def leg(s, airline):
         m = re.match(r"(\S+)\s+(\d\d:\d\d)→(\d\d:\d\d)", s)
         return {"airline": airline, "no": "", "dep": m[2], "arr": m[3]} if m else {}
 
     parts = [p.strip() for p in best["airline"].split("＋")]
+    f["arriveAirport"] = f["departAirport"] = code
     f["outbound"] = leg(best["out"], parts[0])
     f["return"] = leg(best["ret"], parts[-1])
     f["estTwdTotal"] = best["totalEst"]
-    when = last["checkedAt"].replace("T", " ")
-    f["advice"] = (f"Google Flights {when} 實查：{best['airline']} 去 {best['out']}／回 {best['ret']}，"
-                   f"全員含行李約 NT${best['totalEst']:,}（{best['note'] or best['type']}）。{last['summary']} "
+    when = pick["checkedAt"].replace("T", " ")
+    f["advice"] = (f"Google Flights {when} 實查，{code} 進出：{best['airline']} 去 {best['out']}／回 {best['ret']}，"
+                   f"全員含行李約 NT${best['totalEst']:,}（{best['note'] or best['type']}）；"
+                   f"在目的地可用約 {pick['hours']:.0f} 小時。"
+                   + (f"⚠️ {pick['warning']}。" if pick.get("warning") else "")
+                   + "".join(f"比較：{c}。" for c in compare)
                    + (f.get("advice") or ""))
     path.write_text(json.dumps(t, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    log(f"機票價格：採用 {best['airline']} NT${best['totalEst']:,}")
+    log(f"機票：採用 {code} {best['airline']} NT${best['totalEst']:,}，可用 {pick['hours']:.1f} 小時")
     return True
+
+
+def add_ground_cost(a, d, draft, pick):
+    """選定機場和初稿主要機場不同時，補上機場⇄市區的交通費（初稿的 costs 是用原本機場估的）。"""
+    main = (draft.get("flights", {}).get("arriveAirport") or "").upper()
+    g = airport_options(draft).get(pick["airport"]) or {}
+    if pick["airport"] == main or not g.get("groundLocalPerPerson"):
+        return
+    path = d / "trip.json"
+    t = json.loads(path.read_text(encoding="utf-8"))
+    t.setdefault("costs", []).append({
+        "cat": "交通", "label": f"{pick['airport']}⇄市區來回（{g.get('groundRoute') or '機場交通'}）",
+        "local": round(float(g["groundLocalPerPerson"]) * a.travelers * 2),
+        "note": f"估；初稿以 {main} 估交通，改走 {pick['airport']} 後補上，請檢查是否與原有項目重複", "optional": False})
+    path.write_text(json.dumps(t, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+
+
+def decide_flights(a, d, by_airport, draft):
+    """跨機場挑班機；選定機場的 config 與查價紀錄複製到行程根目錄，Actions 之後就追蹤它。"""
+    if not by_airport:
+        return None, []
+    info = airport_options(draft)
+    fx = float(draft.get("localToTwd") or 0.21)
+    pick = choose_flight(by_airport, info, a.start, a.end, a.travelers, fx, a.hour_value, a.allow_redeye)
+    compare = []
+    for code in by_airport:
+        if code != pick["airport"]:
+            alt = choose_flight({code: by_airport[code]}, info, a.start, a.end, a.travelers, fx, a.hour_value,
+                                a.allow_redeye)
+            if alt:
+                compare.append(f"{code} 最佳為 {alt['option']['airline']} NT${alt['option']['totalEst']:,}"
+                               f"＋地面交通 NT${alt['groundTwd']:,}，可用 {alt['hours']:.0f} 小時")
+    src = d / "research" / f"fl-{pick['airport']}"
+    shutil.copy(src / "config.json", d / "config.json")
+    (d / "data").mkdir(exist_ok=True)
+    shutil.copy(src / "data" / "history.json", d / "data" / "history.json")
+    return pick, compare
 
 
 RECONCILE = """下面是一份旅程 JSON，各段由不同人分別查證，可能互相矛盾。只檢查並修正：
 1. 第一天機場進城的交通時刻要在去程班機抵達（flights.outbound.arr，若沒有就看 flights.advice）之後 30–90 分鐘內出發；
 2. 最後一天去機場的交通要在回程班機起飛（flights.return.dep）前至少 2 小時抵達機場；
-3. 第一天與最後一天 items 的時間要和上述一致，不要安排在飛機起飛後或抵達前的活動。
+3. 第一天與最後一天 items 的時間要和上述一致，不要安排在飛機起飛後或抵達前的活動；
+4. 機場段 legs 要用 flights.arriveAirport／departAirport 這個機場。如果原本寫的是別的機場，就改寫成這個機場到住宿區的一般路線
+   （每段 2–3 個 options、恰好一個 rec=true，時刻依班距推估，note 標「估」）。
 不要使用任何工具，不要改其他欄位。只回覆一個 JSON：{"days": {"YYYY-MM-DD": {"items": [...], "legs": [...]}}}，只放需要修改的日期（legs 格式同原本，每段恰好一個 rec=true）；都一致就回 {"days": {}}。
 旅程 JSON：
 """
@@ -406,7 +558,8 @@ def reconcile(a, d, deadline_at):
     path = d / "trip.json"
     before = path.read_text(encoding="utf-8")
     full = json.loads(before)  # 只給它需要比對的部分：航班＋第一天＋最後一天
-    brief = {"flights": {k: full.get("flights", {}).get(k) for k in ("outbound", "return", "advice")},
+    brief = {"flights": {k: full.get("flights", {}).get(k)
+                         for k in ("arriveAirport", "departAirport", "outbound", "return", "advice")},
              "days": [full["days"][0]] + ([full["days"][-1]] if len(full["days"]) > 1 else [])}
     text, to = run_claude(RECONCILE + json.dumps(brief, ensure_ascii=False), timeout=left)
     if to:
@@ -454,8 +607,12 @@ def main():
     ap.add_argument("--draft-timeout", type=int, default=180)
     ap.add_argument("--merge-reserve", type=int, default=90, help="留給合併與一致性整合的秒數")
     ap.add_argument("--tool-timeout", type=int, default=180, help="tracker.py 機票實查的秒數上限")
-    ap.add_argument("--arrive-by", default="18:00", help="去程最晚抵達")
-    ap.add_argument("--depart-after", default="10:00", help="回程最早起飛")
+    ap.add_argument("--arrive-by", default="23:00", help="去程最晚抵達（預設放寬，交給評分挑）")
+    ap.add_argument("--depart-after", default="06:00", help="回程最早起飛（預設放寬，交給評分挑）")
+    ap.add_argument("--hour-value", type=int, default=800,
+                    help="在目的地每多 1 小時值多少台幣（全員），用來和票價取捨")
+    ap.add_argument("--hotel-share", type=float, default=0.35, help="總預算中住宿約占多少比例（給挑選員參考）")
+    ap.add_argument("--allow-redeye", action="store_true", help="紅眼班也納入比較（預設排除，除非全部都是紅眼）")
     ap.add_argument("--bags", type=int, default=1, help="全員每段托運行李總件數（LCC 會加行李費）")
     ap.add_argument("--draft-only", action="store_true")
     a = ap.parse_args()
@@ -474,10 +631,12 @@ def main():
         return
 
     log(f"平行查證（到 {a.deadline - a.merge_reserve}s 為止）…")
-    last = run_scouts(a, d, t, deadline_at)
+    by_airport = run_scouts(a, d, t, deadline_at)
     applied = merge(a, d)
-    if apply_flight_price(d, last):
+    pick, compare = decide_flights(a, d, by_airport, t)
+    if apply_flight_price(d, pick, compare):
         applied.append("flightPrice")
+        add_ground_cost(a, d, t, pick)
     reconcile(a, d, deadline_at)
     t = json.loads((d / "trip.json").read_text(encoding="utf-8"))
     update_index(a, t)

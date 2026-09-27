@@ -30,20 +30,30 @@ STATION_JS = r"""(kw) => {
   return {exact: exact ? exact[0] : null, fuzzy: fuzzy ? fuzzy[0] : null};
 }"""
 
-CARDS_JS = r"""() => [...document.querySelectorAll('a[href*="/yad"]')]
+CARDS_JS = r"""(kw) => [...document.querySelectorAll('a[href*="/yad"]')]
   .filter(a => /合計\(税込\)/.test(a.innerText || ''))
   .map(a => {
-    const t = a.innerText, lines = t.split('\n').map(s => s.trim()).filter(Boolean);
+    const t = (a.innerText || '').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+    const lines = t.split('\n').map(s => s.trim()).filter(Boolean);
     const num = re => { const m = t.match(re); return m ? parseInt(m[1].replace(/,/g, ''), 10) : null; };
+    const acc = (t.match(/【アクセス】\s*([^\n]+)/) || [])[1] || '';
+    // 只看提到目標車站的那一句（「和倉温泉駅から送迎バス5分」不算金沢駅）：
+    //   從車站步行＝「金沢駅…徒歩N分」且中間沒有巴士或開車；巴士＝「金沢駅…バス…N分」
+    const base = kw.replace(/駅$/, '');
+    const parts = acc.split(/[、。/／]/).filter(s => s.includes(base));
+    const sw = parts.map(s => s.match(/駅(.{0,25}?)徒歩\s*約?\s*(\d+)\s*分/)).find(m => m && !/バス|車で|タクシー/.test(m[1]));
+    const bus = parts.map(s => s.match(/バス.{0,20}?(\d+)\s*分/)).find(Boolean);
     return {
       yad: ((a.getAttribute('href') || '').match(/yad(\d+)/) || [])[1],
       name: lines[0],
       total: num(/合計\(税込\)\s*([\d,]+)円/),
       perPerson: num(/1名\s*([\d,]+)円/),
       rating: parseFloat((t.match(/\n(\d\.\d)\n/) || [])[1]) || null,
-      access: ((t.match(/【アクセス】\s*([^\n]+)/) || [])[1] || '').slice(0, 120),
+      access: acc.slice(0, 120),
       shared: /相部屋|ドミトリー|カプセル|バス・?トイレ共同|共同バス/.test(t),
       walkMin: (m => m ? parseInt(m[1], 10) : null)(t.match(/徒歩\s*約?\s*(\d+)\s*分/)),
+      stationWalk: sw ? parseInt(sw[2], 10) : null,
+      busMin: bus ? parseInt(bus[1], 10) : null,
     };
   })"""
 
@@ -100,7 +110,7 @@ def search(kw, checkin, checkout, adults=2, rooms=1, limit=30):
             page.wait_for_timeout(1500)
         except Exception:
             pass
-        cards = page.evaluate(CARDS_JS)
+        cards = page.evaluate(CARDS_JS, kw)
         browser.close()
     seen, out = set(), []
     for c in cards:

@@ -25,7 +25,11 @@
 | `.github/workflows/track.yml` | 每天 09:17／21:17（台北）查所有有 config.json／hotels.json 的 `trips/*/`；沒有就直接結束 |
 | `.claude/commands/plan-trip.md`、`.claude/agents/` | `/plan-trip` 與 5 個分工 agent |
 | `plan_trip.py` | **快速規劃（10 分內）**：初稿 → 4 路平行查證（外部 timeout）＋ `tracker.py` 機票實查＋`tools/jalan_search.py` 住宿實價 → 程式合併 → 一致性整合。不 commit／push |
-| `tools/jalan_search.py` | じゃらん車站周邊一覽（含稅總價、步行分鐘）；車站代碼快取在 `tools/jalan_codes.json` |
+| `tools/jalan_search.py` | じゃらん車站周邊一覽（含稅總價、從車站步行／巴士分鐘）；車站代碼快取在 `tools/jalan_codes.json` |
+
+`plan_trip.py` 的挑選規則（改規則要同步改 `tests/test_plan_trip.py`）：
+- 航班：初稿給 1–2 個候選機場＋地面交通；每個機場各跑 tracker.py。排除到不了住宿地（落地+1h+交通 > 23:00）或回不了機場（< 07:00 出發）的班次、預設排除紅眼班（`--allow-redeye` 開放）；其餘以「機票＋地面交通 − 可用白天時數 × `--hour-value`（預設 NT$800／小時，全員）」最低者勝出。
+- 住宿：程式先過濾成合格清單（非共用衛浴，且從車站步行 ≤15 分或搭巴士 ≤25 分），第一間一定是清單最便宜的，其餘在它 1.6 倍內。
 
 ## 開發慣例
 - Windows 上用 `py` 或 `python`；終端機中文亂碼時先設 `PYTHONIOENCODING=utf-8`。
