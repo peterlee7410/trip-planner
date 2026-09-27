@@ -1,0 +1,67 @@
+name: 行程查價
+
+on:
+  schedule:
+    # GitHub 用 UTC：01:17 與 13:17 UTC = 台北 09:17 與 21:17（與 flight-tracker_1 錯開）
+    - cron: "17 1,13 * * *"
+  workflow_dispatch: {}   # 可在 Actions 頁面手動按「Run workflow」
+
+permissions:
+  contents: write
+
+concurrency:
+  group: track
+  cancel-in-progress: false
+
+jobs:
+  track:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: 有沒有要追蹤的行程
+        id: any
+        run: |
+          shopt -s nullglob
+          n=0
+          for d in trips/*/; do
+            if [ -f "$d/config.json" ] || [ -f "$d/hotels.json" ]; then n=$((n+1)); fi
+          done
+          echo "count=$n" >> "$GITHUB_OUTPUT"
+          echo "要追蹤的行程：$n 趟"
+
+      - uses: actions/setup-python@v6
+        if: steps.any.outputs.count != '0'
+        with:
+          python-version: "3.12"
+
+      - name: 安裝 Playwright
+        if: steps.any.outputs.count != '0'
+        run: |
+          pip install playwright==1.47.0
+          python -m playwright install --with-deps chromium
+
+      - name: 查價（trips/*/）
+        if: steps.any.outputs.count != '0'
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NOTIFY_EVERY_RUN: ${{ vars.NOTIFY_EVERY_RUN }}
+        run: |
+          shopt -s nullglob
+          for d in trips/*/; do
+            if [ -f "$d/config.json" ]; then python tracker.py --trip "$d" || echo "::warning::機票查價失敗 $d"; fi
+            if [ -f "$d/hotels.json" ]; then python hotel_tracker.py --trip "$d" || echo "::warning::飯店查價失敗 $d"; fi
+          done
+
+      - name: 存回結果
+        if: steps.any.outputs.count != '0'
+        run: |
+          git config user.name "trip-planner-bot"
+          git config user.email "trip-planner-bot@users.noreply.github.com"
+          git add trips/
+          git diff --cached --quiet || git commit -m "價格更新 $(TZ=Asia/Taipei date '+%Y-%m-%d %H:%M')"
+          git pull --rebase
+          git push

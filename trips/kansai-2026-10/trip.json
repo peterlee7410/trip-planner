@@ -1,0 +1,988 @@
+{
+ "meta": {
+  "destination": "日本關西（大阪・天橋立・京都・奈良）",
+  "origin": "TPE",
+  "start": "2026-10-14",
+  "end": "2026-10-19",
+  "travelers": 2,
+  "source": "verified",
+  "verifiedAt": "2026-09-27",
+  "liveDataDir": "https://peterlee7410.github.io/flight-tracker_1/data/"
+ },
+ "title": "關西 6 天：大阪・天橋立・京都・奈良",
+ "summary": "大阪進出，第 2–3 天北上天橋立與伊根住一晚溫泉旅館，回京都看嵐山月灯路，週六清水寺加淀川花火免費河堤，週日奈良宇治，週一中午回台。5 日關西廣域券涵蓋第 2–6 天所有 JR 長程。",
+ "currency": "JPY",
+ "localToTwd": 0.21,
+ "flights": {
+  "arriveAirport": "KIX",
+  "departAirport": "KIX",
+  "estTwdTotal": 26518,
+  "advice": "去程虎航 06:40（10:05 到 KIX），回程泰越捷 12:25；兩人含 1+2 件托運約 NT$26,518。紅眼捷星＋泰越捷可再省到 NT$23,836。（2026-09-27 13:46 查價；最新價見上方即時列）",
+  "tips": [
+   "去程要 16:00 前落地、回程 10:00 後起飛",
+   "LCC 托運行李要在訂票時一起買，機場加購較貴"
+  ]
+ },
+ "passes": [
+  {
+   "name": "JR 關西廣域鐵路周遊券 5 日",
+   "priceLocal": 12000,
+   "covers": "HARUKA、特急はしだて、京都丹後鐵道、嵯峨野線、奈良線、回機場",
+   "verdict": "划算：只算 天王寺⇄天橋立 來回就超過票價"
+  }
+ ],
+ "stays": [
+  {
+   "city": "大阪",
+   "checkin": "2026-10-14",
+   "checkout": "2026-10-15",
+   "area": "天王寺",
+   "why": "HARUKA 與關空快速直達、往奈良也快",
+   "candidates": [
+    {
+     "name": "RTI 天王寺",
+     "estLocalPerNight": null,
+     "note": "已訂（10/14、10/17、10/18）"
+    }
+   ]
+  },
+  {
+   "city": "天橋立",
+   "checkin": "2026-10-15",
+   "checkout": "2026-10-16",
+   "area": "天橋立站周邊",
+   "why": "有接駁，隔天去伊根方便",
+   "candidates": [
+    {
+     "name": "天橋立荘 別館 よさの荘",
+     "estLocalPerNight": 14268,
+     "note": "素泊、非溫泉；接駁約 5 分需預約 0772-22-3555；check-in 15:00–18:00",
+     "trackId": "yosanoso",
+     "agodaUrl": "https://www.agoda.com/zh-tw/bekkan-yosanoso/hotel/miyazu-jp.html?checkIn=2026-10-15&checkOut=2026-10-16&los=1&rooms=1&adults=2&children=0&currencyCode=TWD",
+     "jalanUrl": "https://www.jalan.net/yad369872/",
+     "url": "https://yosanosou.com/"
+    },
+    {
+     "name": "天橋立ホテル",
+     "estLocalPerNight": 37400,
+     "note": "站前、海景，對照組",
+     "trackId": "amanohashidate-hotel",
+     "agodaUrl": "https://www.agoda.com/zh-tw/amano-hashidate-hotel/hotel/miyazu-jp.html?checkIn=2026-10-15&checkOut=2026-10-16&los=1&rooms=1&adults=2&children=0&currencyCode=TWD",
+     "jalanUrl": "https://www.jalan.net/yad329976/",
+     "url": "https://www.amanohashidate-htl.co.jp/lg_tw/"
+    }
+   ]
+  },
+  {
+   "city": "京都",
+   "checkin": "2026-10-16",
+   "checkout": "2026-10-17",
+   "area": "京都站南（八条口）",
+   "why": "隔天一早去清水寺、行李好寄",
+   "candidates": [
+    {
+     "name": "グリーンリッチホテル京都駅南",
+     "estLocalPerNight": 19280,
+     "note": "吸菸室素泊；禁菸含早約 ¥22,560；獨立衛浴",
+     "trackId": "greenrich",
+     "agodaUrl": "https://www.agoda.com/zh-tw/green-rich-hotel-kyoto-eki-minami/hotel/kyoto-jp.html?checkIn=2026-10-16&checkOut=2026-10-17&los=1&rooms=1&adults=2&children=0&currencyCode=TWD",
+     "jalanUrl": "https://www.jalan.net/yad346842/",
+     "url": "https://greenrichhotels.jp/kyoto/"
+    },
+    {
+     "name": "ホテルイルヴェルデ京都",
+     "estLocalPerNight": 20400,
+     "note": "不可退款方案",
+     "trackId": "ilverde",
+     "agodaUrl": "https://www.agoda.com/zh-tw/hotel-il-verde-kyoto_2/hotel/kyoto-jp.html?checkIn=2026-10-16&checkOut=2026-10-17&los=1&rooms=1&adults=2&children=0&currencyCode=TWD",
+     "jalanUrl": "https://www.jalan.net/yad384901/",
+     "url": "https://www.hotel-ilverde.com/"
+    },
+    {
+     "name": "ホテルジャパネスク京都駅 ZEQUU ANNEX",
+     "estLocalPerNight": 23050,
+     "note": "不可退款方案",
+     "trackId": "zequu-annex",
+     "agodaUrl": "https://www.agoda.com/zh-tw/hotel-japanesque-kyoto-station-zequu-annex-h58955522/hotel/kyoto-jp.html?checkIn=2026-10-16&checkOut=2026-10-17&los=1&rooms=1&adults=2&children=0&currencyCode=TWD",
+     "jalanUrl": "https://www.jalan.net/yad367761/",
+     "url": "https://hotel-japanesque-kyoto.com/zequu-anx/"
+    },
+    {
+     "name": "アパホテル〈京都駅前中央口〉",
+     "estLocalPerNight": 30420,
+     "note": "站前中央口",
+     "trackId": "apa",
+     "agodaUrl": "https://www.agoda.com/zh-tw/apa-villa-hotel-kyoto-ekimae/hotel/kyoto-jp.html?checkIn=2026-10-16&checkOut=2026-10-17&los=1&rooms=1&adults=2&children=0&currencyCode=TWD",
+     "jalanUrl": "https://www.jalan.net/yad302414/",
+     "url": "https://www3.apahotel.com/hotel/kansai/kyoto/kyoto-ekimae-chuoguchi/"
+    },
+    {
+     "name": "ヴィアインプライム京都駅八条口",
+     "estLocalPerNight": 34980,
+     "note": "八条口",
+     "trackId": "viainn",
+     "agodaUrl": "https://www.agoda.com/zh-tw/via-inn-kyotoeki-hachijoguchi-h10567636/hotel/kyoto-jp.html?checkIn=2026-10-16&checkOut=2026-10-17&los=1&rooms=1&adults=2&children=0&currencyCode=TWD",
+     "jalanUrl": "https://www.jalan.net/yad367740/",
+     "url": "https://www.viainn.com/kyoto-h/"
+    },
+    {
+     "name": "SAKURA TERRACE THE ATELIER",
+     "estLocalPerNight": null,
+     "note": "2026-09-27 じゃらん客滿；共用衛浴",
+     "trackId": "atelier",
+     "agodaUrl": "https://www.agoda.com/zh-tw/sakura-terrace-the-atelier_3/hotel/kyoto-jp.html?checkIn=2026-10-16&checkOut=2026-10-17&los=1&rooms=1&adults=2&children=0&currencyCode=TWD",
+     "jalanUrl": "https://www.jalan.net/yad390084/",
+     "url": "https://sakuraterrace-atelier.jp/"
+    },
+    {
+     "name": "KYOTO PLEASANT HOTEL",
+     "estLocalPerNight": null,
+     "note": "2026-09-27 じゃらん客滿",
+     "trackId": "pleasant",
+     "agodaUrl": "https://www.agoda.com/zh-tw/kyoto-pleasant-hotel/hotel/kyoto-jp.html?checkIn=2026-10-16&checkOut=2026-10-17&los=1&rooms=1&adults=2&children=0&currencyCode=TWD",
+     "jalanUrl": "https://www.jalan.net/yad341349/",
+     "url": "https://kyoto-pleasanthotel.com/"
+    }
+   ]
+  },
+  {
+   "city": "大阪",
+   "checkin": "2026-10-17",
+   "checkout": "2026-10-19",
+   "area": "天王寺",
+   "why": "看完花火回來近，最後一天去機場快",
+   "candidates": [
+    {
+     "name": "RTI 天王寺",
+     "estLocalPerNight": null,
+     "note": "已訂"
+    }
+   ]
+  }
+ ],
+ "days": [
+  {
+   "date": "2026-10-14",
+   "title": "抵達關西・大阪南區",
+   "base": "RTI 天王寺",
+   "items": [
+    "抵達 KIX、天王寺寄行李與休息",
+    "新世界、難波八阪神社、千日前、道頓堀、心齋橋藥妝比價"
+   ],
+   "legs": [
+    {
+     "leg": "關西機場 → 天王寺（紅眼班機 06:00 前後落地）",
+     "src": "https://timetable.jr-odekake.net/station-timetable/3162069001?date=20261014",
+     "options": [
+      {
+       "dep": "07:02",
+       "arr": "08:00",
+       "train": "直通快速",
+       "no": "4312M",
+       "pf": "",
+       "apf": "18",
+       "rec": false,
+       "note": ""
+      },
+      {
+       "dep": "07:27",
+       "arr": "08:08",
+       "train": "特急 HARUKA",
+       "no": "1004M",
+       "pf": "",
+       "apf": "18",
+       "rec": false,
+       "note": "要另買 HARUKA 票"
+      },
+      {
+       "dep": "07:32",
+       "arr": "08:24",
+       "train": "直通快速",
+       "no": "4316M",
+       "pf": "",
+       "apf": "18",
+       "rec": true,
+       "note": "刷 ICOCA ¥1,060，入境後時間最剛好"
+      }
+     ],
+     "tip": "機場站月台依站內看板；直通快速是通勤型車廂，行李放腳邊。"
+    },
+    {
+     "leg": "關西機場 → 天王寺（虎航 10:05 前後落地）",
+     "src": "https://timetable.jr-odekake.net/station-timetable/3162069001?date=20261014",
+     "options": [
+      {
+       "dep": "11:00",
+       "arr": "11:55",
+       "train": "關空快速",
+       "no": "4144M",
+       "pf": "",
+       "apf": "18",
+       "rec": false,
+       "note": ""
+      },
+      {
+       "dep": "11:14",
+       "arr": "11:48",
+       "train": "特急 HARUKA",
+       "no": "1018M",
+       "pf": "",
+       "apf": "18",
+       "rec": false,
+       "note": "要另買 HARUKA 票"
+      },
+      {
+       "dep": "11:17",
+       "arr": "12:10",
+       "train": "關空快速",
+       "no": "4146M",
+       "pf": "",
+       "apf": "18",
+       "rec": true,
+       "note": "刷 ICOCA，入境＋領行李後最剛好"
+      },
+      {
+       "dep": "11:31",
+       "arr": "12:25",
+       "train": "關空快速",
+       "no": "4148M",
+       "pf": "",
+       "apf": "18",
+       "rec": false,
+       "note": ""
+      }
+     ],
+     "tip": "關空快速每 15 分左右一班，錯過就搭下一班。"
+    }
+   ],
+   "food": [
+    "新世界：八重勝／串かつだるま，串炸約 ¥1,000–2,000；排隊太長就換隔壁店。",
+    "難波：金龍拉麵或神座拉麵，約 ¥800–1,200，逛街途中快速吃。",
+    "道頓堀：たこ焼道楽わなか、甲賀流或十八番，章魚燒約 ¥600–900。"
+   ],
+   "tips": [
+    "先把大行李寄放 RTI 天王寺；不要帶去難波購物。",
+    "臨時需要：JR天王寺站中央／北口周邊，或大阪 Metro 天王寺站付費區外置物櫃；大型櫃較早滿。",
+    "今天只用 ICOCA 最省事；不建議為少量市區移動購買一日券。"
+   ],
+   "mapStops": [
+    "関西国際空港",
+    "天王寺駅",
+    "通天閣",
+    "難波八阪神社",
+    "道頓堀",
+    "心斎橋筋商店街"
+   ]
+  },
+  {
+   "date": "2026-10-15",
+   "title": "前往天橋立",
+   "base": "天橋立荘 別館 よさの荘（與謝荘）",
+   "items": [
+    "天王寺經京都前往天橋立",
+    "天橋立站大型寄物櫃放行李，輕裝逛智恩寺、View Land、沙洲",
+    "約定時間回站搭與謝荘接駁車（18:00 前入住）"
+   ],
+   "legs": [
+    {
+     "leg": "天王寺 → 京都（HARUKA）",
+     "src": "https://timetable.jr-odekake.net/station-timetable/2993076002?date=20261015",
+     "options": [
+      {
+       "dep": "07:21",
+       "arr": "08:11",
+       "train": "特急 HARUKA",
+       "no": "1002M",
+       "pf": "18",
+       "apf": "30",
+       "rec": true,
+       "note": "京都轉乘 27 分，接 はしだて1号"
+      },
+      {
+       "dep": "08:09",
+       "arr": "08:59",
+       "train": "特急 HARUKA",
+       "no": "1004M",
+       "pf": "18",
+       "apf": "30",
+       "rec": false,
+       "note": "趕不上 1号 時改接 はしだて5号"
+      }
+     ],
+     "tip": "關西廣域券可劃 HARUKA 指定席，領券時一起劃。"
+    },
+    {
+     "leg": "京都 → 天橋立（特急はしだて）",
+     "src": "https://timetable.jr-odekake.net/station-timetable/2784055001?date=20261015",
+     "options": [
+      {
+       "dep": "08:38",
+       "arr": "10:39",
+       "train": "はしだて1号",
+       "no": "5081M",
+       "pf": "31",
+       "apf": "",
+       "rec": true,
+       "note": "全車指定，事先劃位"
+      },
+      {
+       "dep": "10:25",
+       "arr": "12:36",
+       "train": "はしだて5号",
+       "no": "5085M",
+       "pf": "31",
+       "apf": "",
+       "rec": false,
+       "note": "備案；到站後逛景點時間變少"
+      }
+     ],
+     "tip": "京都 31 號月台在嵯峨野線／山陰線那一側（西端），從 30 號 HARUKA 月台過來很近。09:25 那班是きのさき（只到福知山），不要搭錯。"
+    }
+   ],
+   "food": [
+    "午餐：はしだて茶屋（蛤蜊丼／丹後料理，位於沙洲側）",
+    "平價備選：天橋立站前食堂的烏龍麵、蕎麥麵或海鮮丼，抓 ¥1,000–1,800。",
+    "小吃：智惠之餅、黑竹輪或沙洲旁霜淇淋，適合邊走邊吃。"
+   ],
+   "tips": [
+    "天橋立站出剪票口右後方有 ¥800 大型寄物櫃12格（可放大行李箱）；左側另有 ¥300／¥500 中小型櫃。只收現金，旁邊有換鈔機。",
+    "寄物櫃 5:40–22:50 可用；回站搭接駁前記得先取出。",
+    "關西廣域券第1天；10/15座位建議在 KIX 領券時預約。View Land票現場購買即可。"
+   ],
+   "mapStops": [
+    "天王寺駅",
+    "京都駅",
+    "天橋立駅",
+    "智恩寺 宮津",
+    "天橋立ビューランド",
+    "天橋立荘 別館 よさの荘"
+   ]
+  },
+  {
+   "date": "2026-10-16",
+   "title": "伊根舟屋・嵐山月灯路",
+   "base": "京都站南側（Sakura Terrace The Atelier 追蹤退訂中；備案 Green Rich Hotel 京都站南）",
+   "items": [
+    "早上搭與謝荘接駁回天橋立站，行李寄站內大型櫃",
+    "伊根舟屋、伊根灣遊船與海鮮午餐（可停留約4小時）",
+    "15:51 特急回京都，先到飯店入住放行李",
+    "晚上嵐山月灯路：竹林小徑點燈、竹迴廊（18:00–21:00，最後入場 20:40）"
+   ],
+   "legs": [
+    {
+     "leg": "天橋立 → 京都（特急はしだて）",
+     "src": "",
+     "options": [
+      {
+       "dep": "15:51",
+       "arr": "18:07",
+       "train": "はしだて6号",
+       "no": "5086M",
+       "pf": "",
+       "apf": "31",
+       "rec": true,
+       "note": "京都到 31 號月台"
+      },
+      {
+       "dep": "13:47",
+       "arr": "16:06",
+       "train": "はしだて4号",
+       "no": "",
+       "pf": "",
+       "apf": "",
+       "rec": false,
+       "note": "伊根想早點回來時"
+      }
+     ],
+     "tip": "伊根回天橋立的巴士至少提早一班，確保 15:30 前回到站取行李。"
+    },
+    {
+     "leg": "京都 → 嵯峨嵐山（月灯路）",
+     "src": "https://timetable.jr-odekake.net/station-timetable/2784055001?date=20261016",
+     "options": [
+      {
+       "dep": "18:15",
+       "arr": "18:33",
+       "train": "普通",
+       "no": "259M",
+       "pf": "32",
+       "apf": "",
+       "rec": false,
+       "note": "18:07 到站後直接帶行李去太趕"
+      },
+      {
+       "dep": "18:39",
+       "arr": "18:51",
+       "train": "快速",
+       "no": "2221M",
+       "pf": "33",
+       "apf": "",
+       "rec": false,
+       "note": ""
+      },
+      {
+       "dep": "18:45",
+       "arr": "19:02",
+       "train": "普通",
+       "no": "261M",
+       "pf": "32",
+       "apf": "",
+       "rec": true,
+       "note": "先放行李到站南飯店再回來搭"
+      }
+     ],
+     "tip": "嵯峨野線每小時約 4 班；18:28 那班特急不停嵯峨嵐山。"
+    },
+    {
+     "leg": "嵯峨嵐山 → 京都（回飯店）",
+     "src": "https://timetable.jr-odekake.net/station-timetable/2875055002?date=20261016",
+     "options": [
+      {
+       "dep": "19:58",
+       "arr": "20:16",
+       "train": "普通",
+       "no": "266M",
+       "pf": "",
+       "apf": "33",
+       "rec": false,
+       "note": ""
+      },
+      {
+       "dep": "20:17",
+       "arr": "20:34",
+       "train": "普通",
+       "no": "268M",
+       "pf": "",
+       "apf": "32",
+       "rec": true,
+       "note": "逛完竹林點燈最剛好"
+      },
+      {
+       "dep": "20:32",
+       "arr": "20:49",
+       "train": "普通",
+       "no": "1276M",
+       "pf": "",
+       "apf": "33",
+       "rec": false,
+       "note": ""
+      },
+      {
+       "dep": "20:48",
+       "arr": "21:05",
+       "train": "普通",
+       "no": "270M",
+       "pf": "",
+       "apf": "32",
+       "rec": false,
+       "note": "最後入場 20:40 後的保底班"
+      }
+     ],
+     "tip": ""
+    }
+   ],
+   "food": [
+    "伊根：舟屋食堂的海鮮丼／煮魚定食，或油屋海鮮丼，約 ¥1,500–2,500。",
+    "碼頭小吃：烤竹輪、魚肉可樂餅或簡單熱食。",
+    "特急上：天橋立站前先買便當或飯糰，車上墊胃。"
+   ],
+   "tips": [
+    "天橋立站 ¥800 大型櫃（12格）放行李箱，14:30 前回來取件。",
+    "伊根觀光案內所內有投幣櫃，但數量有限，只作備援。",
+    "關西廣域券第2天（特急＋JR 嵯峨野線皆可）。伊根巴士＋遊船可比較『海之京都 天橋立・伊根 Free Pass』。嵐山月灯路：現場票 ¥1,500（現金，17:50 起在竹林小徑內售票處）、網路票 ¥2,000（僅 JR 東海『EX旅先予約』）；去年全日程售完，想保證入場先買網路票。"
+   ],
+   "mapStops": [
+    "天橋立駅",
+    "伊根浦 舟屋",
+    "天橋立駅",
+    "京都駅",
+    "嵐山 竹林の小径"
+   ]
+  },
+  {
+   "date": "2026-10-17",
+   "title": "清水寺・下鴨神社・淀川花火",
+   "base": "RTI 天王寺",
+   "items": [
+    "一早清水寺（6:00 開門，8:30 前人少）與三年坂、二年坂",
+    "下鴨神社、糺之森與早午餐",
+    "回京都取行李→天王寺放行李→阪神姫島站旁的淀川河堤免費看 19:00–20:00 淀川花火"
+   ],
+   "legs": [
+    {
+     "leg": "祇園四条 → 出町柳（京阪）→ 今出川 → 京都（地鐵烏丸線）",
+     "src": "",
+     "options": [
+      {
+       "dep": "約 9:30",
+       "arr": "約 9:40",
+       "train": "京阪 普通／急行",
+       "no": "",
+       "pf": "",
+       "apf": "",
+       "rec": false,
+       "note": "每 5–10 分一班，刷 ICOCA"
+      },
+      {
+       "dep": "約 11:45",
+       "arr": "約 12:00",
+       "train": "地鐵烏丸線（今出川→京都）",
+       "no": "",
+       "pf": "",
+       "apf": "",
+       "rec": true,
+       "note": "每 5–8 分一班；12:00 前回到京都站取行李"
+      }
+     ],
+     "tip": "私鐵與地鐵班次很密，不用記車次；月台照站內看板「出町柳方面」「京都・竹田方面」。"
+    },
+    {
+     "leg": "京都 → 天王寺（HARUKA）",
+     "src": "https://timetable.jr-odekake.net/station-timetable/2784076001?date=20261017",
+     "options": [
+      {
+       "dep": "12:30",
+       "arr": "13:15",
+       "train": "特急 HARUKA",
+       "no": "1027M",
+       "pf": "30",
+       "apf": "15",
+       "rec": false,
+       "note": ""
+      },
+      {
+       "dep": "13:00",
+       "arr": "13:45",
+       "train": "特急 HARUKA",
+       "no": "1029M",
+       "pf": "30",
+       "apf": "15",
+       "rec": true,
+       "note": "取行李後吃點東西再上車"
+      },
+      {
+       "dep": "13:30",
+       "arr": "14:15",
+       "train": "特急 HARUKA",
+       "no": "1031M",
+       "pf": "30",
+       "apf": "15",
+       "rec": false,
+       "note": "最晚建議班"
+      }
+     ],
+     "tip": "每 30 分一班（:00／:30），京都 30 號月台在最西端，從八条口／中央口都要多走 5 分。"
+    },
+    {
+     "leg": "天王寺 → 梅田（御堂筋線）→ 大阪梅田 → 姫島（阪神）",
+     "src": "",
+     "options": [
+      {
+       "dep": "約 15:40",
+       "arr": "約 16:00",
+       "train": "御堂筋線（天王寺→梅田）",
+       "no": "",
+       "pf": "",
+       "apf": "",
+       "rec": false,
+       "note": "每 3–4 分一班，約 15 分"
+      },
+      {
+       "dep": "約 16:10",
+       "arr": "約 16:20",
+       "train": "阪神本線 普通（大阪梅田→姫島）",
+       "no": "",
+       "pf": "",
+       "apf": "",
+       "rec": true,
+       "note": "約 8–10 分；17:00 前到河堤"
+      }
+     ],
+     "tip": "花火日阪神會加開、急行臨時停姫島，實際依當天阪神公告；回程姫島站會限制進站，散場後可走到千船站分流。"
+    }
+   ],
+   "food": [
+    "清水坂早上店家多 9:00 後才開，出發前在便利商店買咖啡麵包。",
+    "早午餐：加茂みたらし茶屋的御手洗糰子（下鴨神社旁），或出町ふたば豆餅外帶。",
+    "午餐：京都站拉麵小路或第一旭。"
+   ],
+   "tips": [
+    "京都飯店退房後寄放行李，下鴨神社後回來取件。",
+    "回大阪後直接把行李放 RTI 再去看花火；不要帶行李到會場。",
+    "關西廣域券第3天；計程車、京阪、地鐵、Metro 與阪神另付。清水寺門票 ¥500／人。花火採免費觀賞：河川敷 12:00 起可佔位（之前放的東西會被清除），每人約 1㎡；堤防上不可觀賞；梅田側（左岸）今年全面禁止進入。下雨照常施放，不能撐傘，請帶雨衣。"
+   ],
+   "mapStops": [
+    "清水寺",
+    "二年坂",
+    "祇園四条駅",
+    "下鴨神社",
+    "京都駅",
+    "天王寺駅",
+    "姫島駅 大阪"
+   ]
+  },
+  {
+   "date": "2026-10-18",
+   "title": "奈良・宇治",
+   "base": "RTI 天王寺",
+   "items": [
+    "奈良公園、東大寺、二月堂",
+    "宇治平等院、宇治川與抹茶",
+    "回大阪補買藥妝"
+   ],
+   "legs": [
+    {
+     "leg": "天王寺 → 奈良（大和路快速）",
+     "src": "https://timetable.jr-odekake.net/station-timetable/2993062002?date=20261018",
+     "options": [
+      {
+       "dep": "08:20",
+       "arr": "08:55",
+       "train": "大和路快速",
+       "no": "308K",
+       "pf": "16",
+       "apf": "",
+       "rec": true,
+       "note": "9 點前到奈良，鹿與東大寺人還少"
+      },
+      {
+       "dep": "08:35",
+       "arr": "09:11",
+       "train": "大和路快速",
+       "no": "312K",
+       "pf": "16",
+       "apf": "",
+       "rec": false,
+       "note": ""
+      },
+      {
+       "dep": "08:50",
+       "arr": "09:25",
+       "train": "大和路快速",
+       "no": "316K",
+       "pf": "16",
+       "apf": "",
+       "rec": false,
+       "note": ""
+      }
+     ],
+     "tip": "大和路快速每 15 分一班，天王寺 16 號月台。"
+    },
+    {
+     "leg": "奈良 → 宇治（奈良線）",
+     "src": "https://timetable.jr-odekake.net/station-timetable/2981064001?date=20261018",
+     "options": [
+      {
+       "dep": "12:37",
+       "arr": "13:07",
+       "train": "みやこ路快速",
+       "no": "2624M",
+       "pf": "",
+       "apf": "",
+       "rec": false,
+       "note": ""
+      },
+      {
+       "dep": "13:07",
+       "arr": "13:37",
+       "train": "みやこ路快速",
+       "no": "2626M",
+       "pf": "",
+       "apf": "",
+       "rec": true,
+       "note": "奈良逛到午餐後出發"
+      },
+      {
+       "dep": "13:37",
+       "arr": "14:07",
+       "train": "みやこ路快速",
+       "no": "2628M",
+       "pf": "",
+       "apf": "",
+       "rec": false,
+       "note": ""
+      }
+     ],
+     "tip": "みやこ路快速每 30 分一班（:07／:37），宇治只要 30 分；普通車要 40 分以上。"
+    },
+    {
+     "leg": "宇治 → 京都（奈良線）",
+     "src": "https://timetable.jr-odekake.net/station-timetable/3017064001?date=20261018",
+     "options": [
+      {
+       "dep": "16:07",
+       "arr": "16:25",
+       "train": "みやこ路快速",
+       "no": "2636M",
+       "pf": "",
+       "apf": "10",
+       "rec": true,
+       "note": "京都 10 號到站，轉 30 號 HARUKA 約走 8 分"
+      },
+      {
+       "dep": "16:37",
+       "arr": "16:55",
+       "train": "みやこ路快速",
+       "no": "2638M",
+       "pf": "",
+       "apf": "10",
+       "rec": false,
+       "note": "轉 17:30 HARUKA 1047M → 18:16"
+      }
+     ],
+     "tip": "京都站奈良線月台（8–10）在東南側，HARUKA（30）在西端，轉乘別抓太緊。"
+    },
+    {
+     "leg": "京都 → 天王寺（HARUKA）",
+     "src": "https://timetable.jr-odekake.net/station-timetable/2784076001?date=20261018",
+     "options": [
+      {
+       "dep": "17:00",
+       "arr": "17:46",
+       "train": "特急 HARUKA",
+       "no": "1045M",
+       "pf": "30",
+       "apf": "15",
+       "rec": true,
+       "note": "有 35 分緩衝"
+      },
+      {
+       "dep": "17:30",
+       "arr": "18:16",
+       "train": "特急 HARUKA",
+       "no": "1047M",
+       "pf": "",
+       "apf": "",
+       "rec": false,
+       "note": "搭 16:37 みやこ路快速時接這班"
+      }
+     ],
+     "tip": ""
+    }
+   ],
+   "food": [
+    "奈良：麵闘庵巾著烏龍麵、天理スタミナラーメン或柿葉壽司，約 ¥800–1,500。",
+    "東大寺小吃：中谷堂艾草麻糬、大佛布丁；釜飯排隊太久直接略過。",
+    "宇治：伊藤久右衛門 JR宇治站前店抹茶蕎麥麵／甜點；只吃甜點可抓 ¥700–1,300。"
+   ],
+   "tips": [
+    "當天不退房，大行李留 RTI，只帶隨身包。",
+    "若需寄物：JR奈良站或近鐵奈良站西閘口左側置物櫃；近鐵奈良觀光案內所也有有限人工寄存。",
+    "關西廣域券第4天。市內以步行為主；奈良公園巴士若搭乘則另付ICOCA。"
+   ],
+   "mapStops": [
+    "天王寺駅",
+    "奈良公園",
+    "東大寺",
+    "平等院",
+    "宇治駅"
+   ]
+  },
+  {
+   "date": "2026-10-19",
+   "title": "回程",
+   "base": "返台",
+   "items": [
+    "08:10 天王寺搭 HARUKA 1007M（15號月台）",
+    "目標09:00左右抵達KIX",
+    "12:25航班，預留退稅、托運與安檢時間"
+   ],
+   "legs": [
+    {
+     "leg": "天王寺 → 關西機場",
+     "src": "https://timetable.jr-odekake.net/station-timetable/2993068001?date=20261019",
+     "options": [
+      {
+       "dep": "07:37",
+       "arr": "08:19",
+       "train": "特急 HARUKA",
+       "no": "1005M",
+       "pf": "15",
+       "apf": "",
+       "rec": false,
+       "note": "想更早到時"
+      },
+      {
+       "dep": "07:39",
+       "arr": "08:32",
+       "train": "關空快速／紀州路快速",
+       "no": "5117M",
+       "pf": "4",
+       "apf": "",
+       "rec": false,
+       "note": "只能坐前 4 節（關空快速）"
+      },
+      {
+       "dep": "08:10",
+       "arr": "08:51",
+       "train": "特急 HARUKA",
+       "no": "1007M",
+       "pf": "15",
+       "apf": "",
+       "rec": true,
+       "note": "兩件托運行李用廣域券劃座，9 點前到"
+      },
+      {
+       "dep": "08:13",
+       "arr": "09:02",
+       "train": "關空快速／紀州路快速",
+       "no": "5121M",
+       "pf": "4",
+       "apf": "",
+       "rec": false,
+       "note": "只能坐前 4 節"
+      }
+     ],
+     "tip": "關空快速在日根野分車，後段開往和歌山，一定要上前 4 節「關西空港」車廂。"
+    }
+   ],
+   "food": [
+    "早餐：天王寺站便利商店／飯店簡單吃，避免因餐廳排隊延誤",
+    "機場：完成托運與安檢後再安排正餐或伴手禮"
+   ],
+   "tips": [
+    "不建議寄物；行李直接帶往機場。若航班改晚，可先寄RTI並設定最晚取件時間。",
+    "直接使用關西廣域券，無須另買機場車票。"
+   ],
+   "mapStops": [
+    "天王寺駅",
+    "関西国際空港"
+   ]
+  }
+ ],
+ "costs": [
+  {
+   "cat": "交通",
+   "label": "JR 關西廣域券 5 日（10/15–10/19）",
+   "local": 24000,
+   "note": "¥12,000×2；含特急はしだて、京都丹後鐵道、嵯峨野線、奈良、宇治與回機場",
+   "optional": false
+  },
+  {
+   "cat": "交通",
+   "label": "10/14 關西機場→天王寺 JR",
+   "local": 2200,
+   "note": "約 ¥1,100×2，刷 ICOCA",
+   "optional": false
+  },
+  {
+   "cat": "交通",
+   "label": "10/14 大阪市區 Metro",
+   "local": 1200,
+   "note": "新世界、難波、心齋橋，約 ¥600×2",
+   "optional": false
+  },
+  {
+   "cat": "交通",
+   "label": "10/16 天橋立⇄伊根 丹海巴士",
+   "local": 1600,
+   "note": "單程 ¥400（兩區段各 ¥200）×來回×2",
+   "optional": false
+  },
+  {
+   "cat": "交通",
+   "label": "10/17 計程車 飯店→清水寺",
+   "local": 1800,
+   "note": "約15分，兩人合搭",
+   "optional": false
+  },
+  {
+   "cat": "交通",
+   "label": "10/17 京阪＋地鐵（祇園四条→出町柳→京都）",
+   "local": 1080,
+   "note": "(¥280＋¥260)×2",
+   "optional": false
+  },
+  {
+   "cat": "交通",
+   "label": "10/17 Metro＋阪神 往返姫島",
+   "local": 1960,
+   "note": "天王寺⇄梅田 ¥290、梅田⇄姫島 約 ¥200，來回×2",
+   "optional": false
+  },
+  {
+   "cat": "交通",
+   "label": "10/18 奈良市內巴士",
+   "local": 1000,
+   "note": "¥250×2趟×2（可步行省下）",
+   "optional": false
+  },
+  {
+   "cat": "門票與活動",
+   "label": "天橋立 View Land",
+   "local": 1700,
+   "note": "單軌／吊椅來回 ¥850×2",
+   "optional": false
+  },
+  {
+   "cat": "門票與活動",
+   "label": "伊根灣遊覽船",
+   "local": 2400,
+   "note": "¥1,200×2",
+   "optional": false
+  },
+  {
+   "cat": "門票與活動",
+   "label": "嵐山月灯路",
+   "local": 3000,
+   "note": "現場票 ¥1,500×2；網路票 ¥2,000×2 另加 ¥1,000",
+   "optional": false
+  },
+  {
+   "cat": "門票與活動",
+   "label": "清水寺",
+   "local": 1000,
+   "note": "¥500×2",
+   "optional": false
+  },
+  {
+   "cat": "門票與活動",
+   "label": "東大寺大佛殿",
+   "local": 1600,
+   "note": "¥800×2",
+   "optional": false
+  },
+  {
+   "cat": "門票與活動",
+   "label": "宇治平等院",
+   "local": 1400,
+   "note": "¥700×2",
+   "optional": false
+  },
+  {
+   "cat": "門票與活動",
+   "label": "淀川花火付費席",
+   "local": 28000,
+   "note": "付費席兩人約 ¥28,000（パノラマ席 ¥5,000／人起）；選免費觀賞則為 ¥0",
+   "optional": true
+  },
+  {
+   "cat": "其他",
+   "label": "天橋立站大型寄物櫃",
+   "local": 1600,
+   "note": "¥800×2天（兩件大行李箱需兩格則加倍）",
+   "optional": false
+  },
+  {
+   "cat": "其他",
+   "label": "京都住宿稅",
+   "local": 800,
+   "note": "每人每晚約 ¥400，入住時付現",
+   "optional": false
+  }
+ ],
+ "foodLevels": {
+  "save": 3500,
+  "normal": 5500,
+  "loose": 8000
+ },
+ "checklist": [
+  "訂機票（看追蹤頁建議與 Telegram 提醒）",
+  "訂與謝荘（9/29 前有「お得な10日間」優惠）並預約接駁：0772-22-3555",
+  "訂京都 10/16 住宿（Green Rich 或其他候選）",
+  "KIX 領關西廣域券時一次劃好 HARUKA、はしだて1号、はしだて6号指定席",
+  "嵐山月灯路決定現場票（¥1,500 現金）或網路票（¥2,000）",
+  "花火日 17:00 前到姫島河堤，帶墊子",
+  "出發前一天再用官方時刻表確認班次與月台"
+ ]
+}

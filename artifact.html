@@ -1,0 +1,556 @@
+<title>旅程產生器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<style>
+:root{
+  --bg:#F2F5F1; --surface:#FFFFFF; --surface-2:#E8EEE9; --ink:#1B2A2C; --muted:#5E6F6B; --line:#D3DCD6;
+  --accent:#23705F; --accent-ink:#FFFFFF; --accent-soft:#DDEEE7; --stamp:#B8412C; --stamp-soft:#F7E3DD;
+  --warn:#8A5A00; --warn-soft:#FBF0D6;
+  --c1:#23705F; --c2:#3F7FB5; --c3:#C08A2E; --c4:#9A5AA6; --c5:#B8412C;
+  --display:"Noto Serif TC","Songti TC","PMingLiU",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#111918; --surface:#18221F; --surface-2:#1F2B28; --ink:#E4ECE8; --muted:#95A6A1; --line:#2E3C38;
+    --accent:#5CC2A5; --accent-ink:#0E1614; --accent-soft:#1C3530; --stamp:#E57B63; --stamp-soft:#3A221D;
+    --warn:#E3B55A; --warn-soft:#352A14;
+    --c1:#5CC2A5; --c2:#6FA8DC; --c3:#D9A94F; --c4:#C18BCB; --c5:#E57B63;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111918; --surface:#18221F; --surface-2:#1F2B28; --ink:#E4ECE8; --muted:#95A6A1; --line:#2E3C38;
+  --accent:#5CC2A5; --accent-ink:#0E1614; --accent-soft:#1C3530; --stamp:#E57B63; --stamp-soft:#3A221D;
+  --warn:#E3B55A; --warn-soft:#352A14;
+  --c1:#5CC2A5; --c2:#6FA8DC; --c3:#D9A94F; --c4:#C18BCB; --c5:#E57B63;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:20px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 20px;border-bottom:2px solid var(--ink);padding-bottom:10px}
+header.top h1{font-family:var(--display);font-size:clamp(26px,4vw,36px);margin:0;letter-spacing:.04em;text-wrap:balance}
+header.top p{margin:0;color:var(--muted);font-size:13px;max-width:62ch}
+.layout{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:minmax(0,1fr)}}
+aside.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);display:grid;gap:14px}
+@media (max-width:860px){aside.panel{position:static}}
+.ticket-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--accent);border-bottom:1px dashed var(--line);padding-bottom:8px}
+.field{display:grid;gap:4px}
+.field label,.lbl{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+aside.panel,form,.field{min-width:0}
+main,aside.panel,section.block,.card,.hero,form>div{grid-template-columns:minmax(0,1fr)}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;width:100%;min-width:0}
+textarea{min-height:64px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:3px 11px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button{font:inherit;cursor:pointer}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 14px;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700;padding:11px 14px;width:100%;font-size:16px}
+.btn.primary:disabled{opacity:.6;cursor:progress}
+.btn.small{padding:5px 10px;font-size:13px}
+.status{font-size:13px;color:var(--muted);min-height:1.4em}
+.status.err{color:var(--stamp)}
+.progress{display:flex;gap:10px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.bar{flex:1;height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;width:30%;background:var(--accent);animation:slide 1.4s ease-in-out infinite}
+@keyframes slide{0%{transform:translateX(-100%)}100%{transform:translateX(340%)}}
+@media (prefers-reduced-motion:reduce){.bar i{animation:none;width:100%;opacity:.5}}
+.note{font-size:12px;color:var(--muted);margin:0}
+main{display:grid;gap:18px;min-width:0}
+.banner{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:10px 14px;font-size:13px}
+.banner b{color:var(--warn)}
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px}
+.hero h2{font-family:var(--display);font-size:clamp(22px,3vw,28px);margin:0;text-wrap:balance}
+.hero .route{font-family:var(--mono);font-size:13px;letter-spacing:.08em;color:var(--accent)}
+.hero p{margin:0;max-width:70ch}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+nav.jump{display:flex;gap:4px;flex-wrap:wrap;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:6px;z-index:2;border-bottom:1px solid var(--line)}
+nav.jump a{font-size:13px;color:var(--muted);text-decoration:none;padding:4px 10px;border-radius:6px}
+nav.jump a:hover{background:var(--surface-2);color:var(--ink)}
+section.block{display:grid;gap:12px;scroll-margin-top:52px}
+section.block>h3{font-family:var(--display);font-size:20px;margin:0;display:flex;align-items:baseline;gap:10px}
+section.block>h3 small{font-family:var(--body);font-size:12px;color:var(--muted);font-weight:400}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:8px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.kv span:first-child{color:var(--muted)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.links{display:flex;flex-wrap:wrap;gap:6px}
+.links a{font-size:13px;color:var(--accent);text-decoration:none;border:1px solid var(--accent-soft);background:var(--accent-soft);border-radius:6px;padding:3px 9px}
+.links a:hover{border-color:var(--accent)}
+ul.clean{margin:0;padding-left:18px;display:grid;gap:3px}
+.stay h4,.day h4{margin:0;font-size:16px}
+.cand{display:grid;gap:4px;border-top:1px dashed var(--line);padding-top:8px}
+.cand .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.cand .price{font-family:var(--mono);font-size:13px}
+.day{gap:10px}
+.dayhead{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.date{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent-ink);background:var(--accent);border-radius:5px;padding:1px 8px}
+.base{font-size:13px;color:var(--muted)}
+.leg{display:grid;gap:4px}
+.leg .legname{font-size:13px;font-weight:700;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.leg .legname a{font-weight:400;color:var(--accent);font-size:12px;text-decoration:none}
+.tr{display:grid;grid-template-columns:minmax(96px,auto) 1fr auto;gap:2px 10px;align-items:center;border:1px solid var(--line);border-radius:7px;padding:5px 9px;font-size:13px}
+.tr .t{font-family:var(--mono);font-weight:600;white-space:nowrap}
+.tr .t small{font-weight:500;color:var(--muted)}
+.tr .pf{font-size:12px;text-align:right;white-space:nowrap;color:var(--muted)}
+.tr .nt{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.tr.rec{border:2px solid var(--stamp);background:var(--stamp-soft)}
+.stamp{display:inline-block;border:1.5px solid var(--stamp);color:var(--stamp);font-size:11px;font-weight:700;border-radius:4px;padding:0 4px;margin-right:6px;transform:rotate(-3deg)}
+details.more summary{cursor:pointer;font-size:13px;color:var(--accent);font-weight:500}
+details.more[open] summary{margin-bottom:6px}
+.costbar{display:flex;height:16px;border-radius:4px;overflow:hidden;background:var(--surface-2)}
+.costbar span{display:block;height:100%;min-width:2px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.total{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px}
+.total b{font-family:var(--mono);font-size:26px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:13px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:12px}
+td.r,th.r{text-align:right;font-family:var(--mono);white-space:nowrap}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end}
+.controls .field{min-width:140px}
+.saved{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;min-width:0}
+.saved .it>a{flex:none}
+.saved .it{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;border-top:1px solid var(--line);padding-top:6px}
+.saved .it span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.checklist li{list-style:none;margin-left:-18px;display:flex;gap:8px}
+.checklist li::before{content:"□";color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;z-index:5}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>旅程產生器</h1>
+    <p>填目的地、日期和人數，一次產生機票建議、住宿區域與候選、每日行程與交通班次、全程費用試算。價格與班次是 AI 估算，每一項都附查證連結。</p>
+  </header>
+
+  <div class="layout">
+    <aside class="panel" aria-label="旅程條件">
+      <div class="ticket-head"><span>TRIP REQUEST</span><span id="dayCount">6 DAYS</span></div>
+      <form id="form" novalidate>
+        <div style="display:grid;gap:12px">
+          <div class="field"><label for="dest">目的地（可多城市）</label><input id="dest" required placeholder="例：北海道 札幌・小樽・富良野"></div>
+          <div class="row2">
+            <div class="field"><label for="origin">出發機場</label><input id="origin" value="TPE" maxlength="40"></div>
+            <div class="field"><label for="travelers">人數</label><input id="travelers" type="number" min="1" max="12" value="2"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="start">去程日</label><input id="start" type="date"></div>
+            <div class="field"><label for="end">回程日</label><input id="end" type="date"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="arriveBy">去程最晚抵達</label><input id="arriveBy" type="time" value="16:00"></div>
+            <div class="field"><label for="departAfter">回程最早起飛</label><input id="departAfter" type="time" value="10:00"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="budget">總預算（NT$，全員）</label><input id="budget" type="number" min="0" step="1000" value="60000"></div>
+            <div class="field"><label for="hotelBudget">每晚住宿上限（NT$）</label><input id="hotelBudget" type="number" min="0" step="500" value="4000"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="pace">步調</label><select id="pace"><option value="輕鬆">輕鬆</option><option value="一般" selected>一般</option><option value="緊湊">緊湊</option></select></div>
+            <div class="field"><label for="airline">航空</label><select id="airline"><option value="LCC 與傳統皆可">LCC 與傳統皆可</option><option value="只要傳統航空">只要傳統航空</option><option value="越便宜越好（可紅眼）">越便宜越好（可紅眼）</option></select></div>
+          </div>
+          <div class="field"><span class="lbl">興趣</span><div class="chips" id="interests"></div></div>
+          <div class="field"><label for="luggage">行李</label><input id="luggage" value="去程 1 件托運、回程 2 件托運"></div>
+          <div class="field"><label for="notes">其他條件（已訂的住宿、必去、不吃的東西…）</label><textarea id="notes" placeholder="例：第 3 晚想住溫泉旅館；已訂札幌站前飯店 3 晚"></textarea></div>
+          <button class="btn primary" id="go" type="submit">產生整套行程</button>
+          <div class="progress" id="progress" hidden><div class="bar"><i></i></div><span id="progTxt">思考中…</span><button type="button" class="btn small" id="stop">停止</button></div>
+          <div class="status" id="status" role="status"></div>
+          <p class="note" id="modeNote">產生時會用你自己的 Claude 額度（第一次會詢問同意），不需要 API 金鑰。一次約 1–3 分鐘。</p>
+          <div id="manual" hidden style="display:grid;gap:8px">
+            <div class="field"><label for="promptOut">① 複製提示詞，貼到 Claude（網頁版或 App 都可以）</label><textarea id="promptOut" readonly style="min-height:90px;font-size:12px"></textarea></div>
+            <div class="actions"><button type="button" class="btn small" id="copyPrompt">複製提示詞</button><a class="btn small" href="https://claude.ai/new" target="_blank" rel="noopener noreferrer" style="text-decoration:none">開啟 Claude ↗</a></div>
+            <div class="field"><label for="answerIn">② 把 Claude 回覆的 JSON 整段貼回這裡</label><textarea id="answerIn" placeholder="{ &quot;title&quot;: … }" style="min-height:90px;font-size:12px"></textarea></div>
+            <button type="button" class="btn" id="applyAnswer">套用結果</button>
+          </div>
+        </div>
+      </form>
+      <div class="saved" id="savedBox" hidden>
+        <div class="ticket-head"><span>SAVED TRIPS</span><span id="savedCount"></span></div>
+        <div id="savedList"></div>
+      </div>
+    </aside>
+
+    <main id="out" aria-live="polite"></main>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const EXAMPLE = {"meta": {"destination": "日本關西（大阪・天橋立・京都・奈良）", "origin": "TPE", "start": "2026-10-14", "end": "2026-10-19", "travelers": 2, "budgetTwd": 60000, "source": "example", "generatedAt": "2026-09-27"}, "title": "關西 6 天：大阪・天橋立・京都・奈良", "summary": "大阪進出，第 2–3 天北上天橋立與伊根住一晚溫泉旅館，回京都看嵐山月灯路，週六清水寺加淀川花火免費河堤，週日奈良宇治，週一中午回台。5 日關西廣域券涵蓋第 2–6 天所有 JR 長程。", "currency": "JPY", "localToTwd": 0.21, "flights": {"arriveAirport": "KIX", "departAirport": "KIX", "estTwdTotal": 26518, "advice": "去程虎航 06:40（10:05 到 KIX），回程泰越捷 12:25；兩人含 1+2 件托運約 NT$26,518。紅眼捷星＋泰越捷可再省到 NT$23,836。", "tips": ["去程要 16:00 前落地、回程 10:00 後起飛", "LCC 托運行李要在訂票時一起買，機場加購較貴"]}, "passes": [{"name": "JR 關西廣域鐵路周遊券 5 日", "priceLocal": 12000, "covers": "HARUKA、特急はしだて、京都丹後鐵道、嵯峨野線、奈良線、回機場", "verdict": "划算：只算 天王寺⇄天橋立 來回就超過票價"}], "stays": [{"city": "大阪", "checkin": "2026-10-14", "checkout": "2026-10-15", "area": "天王寺", "why": "HARUKA 與關空快速直達、往奈良也快", "candidates": [{"name": "RTI 天王寺", "estLocalPerNight": null, "note": "已訂（10/14、10/17、10/18）"}]}, {"city": "天橋立", "checkin": "2026-10-15", "checkout": "2026-10-16", "area": "天橋立站周邊", "why": "有接駁，隔天去伊根方便", "candidates": [{"name": "天橋立荘 別館 よさの荘", "estLocalPerNight": 14268, "note": "素泊，接駁需預約"}, {"name": "天橋立ホテル", "estLocalPerNight": 37400, "note": "站前、海景"}]}, {"city": "京都", "checkin": "2026-10-16", "checkout": "2026-10-17", "area": "京都站南（八条口）", "why": "隔天一早去清水寺、行李好寄", "candidates": [{"name": "Green Rich Hotel 京都駅南", "estLocalPerNight": 19280, "note": "可訂最便宜、有獨立衛浴"}, {"name": "Hotel Il Verde Kyoto", "estLocalPerNight": 20400, "note": "不可退款方案"}]}, {"city": "大阪", "checkin": "2026-10-17", "checkout": "2026-10-19", "area": "天王寺", "why": "看完花火回來近，最後一天去機場快", "candidates": [{"name": "RTI 天王寺", "estLocalPerNight": null, "note": "已訂"}]}], "days": [{"date": "2026-10-14", "title": "抵達關西・大阪南區", "base": "RTI 天王寺", "items": ["抵達 KIX、天王寺寄行李與休息", "新世界、難波八阪神社、千日前、道頓堀、心齋橋藥妝比價"], "legs": [{"leg": "關西機場 → 天王寺（紅眼班機 06:00 前後落地）", "src": "https://timetable.jr-odekake.net/station-timetable/3162069001?date=20261014", "options": [{"dep": "07:02", "arr": "08:00", "train": "直通快速", "no": "4312M", "pf": "", "apf": "18", "rec": false, "note": ""}, {"dep": "07:27", "arr": "08:08", "train": "特急 HARUKA", "no": "1004M", "pf": "", "apf": "18", "rec": false, "note": "要另買 HARUKA 票"}, {"dep": "07:32", "arr": "08:24", "train": "直通快速", "no": "4316M", "pf": "", "apf": "18", "rec": true, "note": "刷 ICOCA ¥1,060，入境後時間最剛好"}], "tip": "機場站月台依站內看板；直通快速是通勤型車廂，行李放腳邊。"}, {"leg": "關西機場 → 天王寺（虎航 10:05 前後落地）", "src": "https://timetable.jr-odekake.net/station-timetable/3162069001?date=20261014", "options": [{"dep": "11:00", "arr": "11:55", "train": "關空快速", "no": "4144M", "pf": "", "apf": "18", "rec": false, "note": ""}, {"dep": "11:14", "arr": "11:48", "train": "特急 HARUKA", "no": "1018M", "pf": "", "apf": "18", "rec": false, "note": "要另買 HARUKA 票"}, {"dep": "11:17", "arr": "12:10", "train": "關空快速", "no": "4146M", "pf": "", "apf": "18", "rec": true, "note": "刷 ICOCA，入境＋領行李後最剛好"}, {"dep": "11:31", "arr": "12:25", "train": "關空快速", "no": "4148M", "pf": "", "apf": "18", "rec": false, "note": ""}], "tip": "關空快速每 15 分左右一班，錯過就搭下一班。"}], "food": ["新世界：八重勝／串かつだるま，串炸約 ¥1,000–2,000；排隊太長就換隔壁店。", "難波：金龍拉麵或神座拉麵，約 ¥800–1,200，逛街途中快速吃。", "道頓堀：たこ焼道楽わなか、甲賀流或十八番，章魚燒約 ¥600–900。"], "tips": ["先把大行李寄放 RTI 天王寺；不要帶去難波購物。", "臨時需要：JR天王寺站中央／北口周邊，或大阪 Metro 天王寺站付費區外置物櫃；大型櫃較早滿。", "今天只用 ICOCA 最省事；不建議為少量市區移動購買一日券。"], "mapStops": ["関西国際空港", "天王寺駅", "通天閣", "難波八阪神社", "道頓堀", "心斎橋筋商店街"]}, {"date": "2026-10-15", "title": "前往天橋立", "base": "天橋立荘 別館 よさの荘（與謝荘）", "items": ["天王寺經京都前往天橋立", "天橋立站大型寄物櫃放行李，輕裝逛智恩寺、View Land、沙洲", "約定時間回站搭與謝荘接駁車（18:00 前入住）"], "legs": [{"leg": "天王寺 → 京都（HARUKA）", "src": "https://timetable.jr-odekake.net/station-timetable/2993076002?date=20261015", "options": [{"dep": "07:21", "arr": "08:11", "train": "特急 HARUKA", "no": "1002M", "pf": "18", "apf": "30", "rec": true, "note": "京都轉乘 27 分，接 はしだて1号"}, {"dep": "08:09", "arr": "08:59", "train": "特急 HARUKA", "no": "1004M", "pf": "18", "apf": "30", "rec": false, "note": "趕不上 1号 時改接 はしだて5号"}], "tip": "關西廣域券可劃 HARUKA 指定席，領券時一起劃。"}, {"leg": "京都 → 天橋立（特急はしだて）", "src": "https://timetable.jr-odekake.net/station-timetable/2784055001?date=20261015", "options": [{"dep": "08:38", "arr": "10:39", "train": "はしだて1号", "no": "5081M", "pf": "31", "apf": "", "rec": true, "note": "全車指定，事先劃位"}, {"dep": "10:25", "arr": "12:36", "train": "はしだて5号", "no": "5085M", "pf": "31", "apf": "", "rec": false, "note": "備案；到站後逛景點時間變少"}], "tip": "京都 31 號月台在嵯峨野線／山陰線那一側（西端），從 30 號 HARUKA 月台過來很近。09:25 那班是きのさき（只到福知山），不要搭錯。"}], "food": ["午餐：はしだて茶屋（蛤蜊丼／丹後料理，位於沙洲側）", "平價備選：天橋立站前食堂的烏龍麵、蕎麥麵或海鮮丼，抓 ¥1,000–1,800。", "小吃：智惠之餅、黑竹輪或沙洲旁霜淇淋，適合邊走邊吃。"], "tips": ["天橋立站出剪票口右後方有 ¥800 大型寄物櫃12格（可放大行李箱）；左側另有 ¥300／¥500 中小型櫃。只收現金，旁邊有換鈔機。", "寄物櫃 5:40–22:50 可用；回站搭接駁前記得先取出。", "關西廣域券第1天；10/15座位建議在 KIX 領券時預約。View Land票現場購買即可。"], "mapStops": ["天王寺駅", "京都駅", "天橋立駅", "智恩寺 宮津", "天橋立ビューランド", "天橋立荘 別館 よさの荘"]}, {"date": "2026-10-16", "title": "伊根舟屋・嵐山月灯路", "base": "京都站南側（Sakura Terrace The Atelier 追蹤退訂中；備案 Green Rich Hotel 京都站南）", "items": ["早上搭與謝荘接駁回天橋立站，行李寄站內大型櫃", "伊根舟屋、伊根灣遊船與海鮮午餐（可停留約4小時）", "15:51 特急回京都，先到飯店入住放行李", "晚上嵐山月灯路：竹林小徑點燈、竹迴廊（18:00–21:00，最後入場 20:40）"], "legs": [{"leg": "天橋立 → 京都（特急はしだて）", "src": "", "options": [{"dep": "15:51", "arr": "18:07", "train": "はしだて6号", "no": "5086M", "pf": "", "apf": "31", "rec": true, "note": "京都到 31 號月台"}, {"dep": "13:47", "arr": "16:06", "train": "はしだて4号", "no": "", "pf": "", "apf": "", "rec": false, "note": "伊根想早點回來時"}], "tip": "伊根回天橋立的巴士至少提早一班，確保 15:30 前回到站取行李。"}, {"leg": "京都 → 嵯峨嵐山（月灯路）", "src": "https://timetable.jr-odekake.net/station-timetable/2784055001?date=20261016", "options": [{"dep": "18:15", "arr": "18:33", "train": "普通", "no": "259M", "pf": "32", "apf": "", "rec": false, "note": "18:07 到站後直接帶行李去太趕"}, {"dep": "18:39", "arr": "18:51", "train": "快速", "no": "2221M", "pf": "33", "apf": "", "rec": false, "note": ""}, {"dep": "18:45", "arr": "19:02", "train": "普通", "no": "261M", "pf": "32", "apf": "", "rec": true, "note": "先放行李到站南飯店再回來搭"}], "tip": "嵯峨野線每小時約 4 班；18:28 那班特急不停嵯峨嵐山。"}, {"leg": "嵯峨嵐山 → 京都（回飯店）", "src": "https://timetable.jr-odekake.net/station-timetable/2875055002?date=20261016", "options": [{"dep": "19:58", "arr": "20:16", "train": "普通", "no": "266M", "pf": "", "apf": "33", "rec": false, "note": ""}, {"dep": "20:17", "arr": "20:34", "train": "普通", "no": "268M", "pf": "", "apf": "32", "rec": true, "note": "逛完竹林點燈最剛好"}, {"dep": "20:32", "arr": "20:49", "train": "普通", "no": "1276M", "pf": "", "apf": "33", "rec": false, "note": ""}, {"dep": "20:48", "arr": "21:05", "train": "普通", "no": "270M", "pf": "", "apf": "32", "rec": false, "note": "最後入場 20:40 後的保底班"}], "tip": ""}], "food": ["伊根：舟屋食堂的海鮮丼／煮魚定食，或油屋海鮮丼，約 ¥1,500–2,500。", "碼頭小吃：烤竹輪、魚肉可樂餅或簡單熱食。", "特急上：天橋立站前先買便當或飯糰，車上墊胃。"], "tips": ["天橋立站 ¥800 大型櫃（12格）放行李箱，14:30 前回來取件。", "伊根觀光案內所內有投幣櫃，但數量有限，只作備援。", "關西廣域券第2天（特急＋JR 嵯峨野線皆可）。伊根巴士＋遊船可比較『海之京都 天橋立・伊根 Free Pass』。嵐山月灯路：現場票 ¥1,500（現金，17:50 起在竹林小徑內售票處）、網路票 ¥2,000（僅 JR 東海『EX旅先予約』）；去年全日程售完，想保證入場先買網路票。"], "mapStops": ["天橋立駅", "伊根浦 舟屋", "天橋立駅", "京都駅", "嵐山 竹林の小径"]}, {"date": "2026-10-17", "title": "清水寺・下鴨神社・淀川花火", "base": "RTI 天王寺", "items": ["一早清水寺（6:00 開門，8:30 前人少）與三年坂、二年坂", "下鴨神社、糺之森與早午餐", "回京都取行李→天王寺放行李→阪神姫島站旁的淀川河堤免費看 19:00–20:00 淀川花火"], "legs": [{"leg": "祇園四条 → 出町柳（京阪）→ 今出川 → 京都（地鐵烏丸線）", "src": "", "options": [{"dep": "約 9:30", "arr": "約 9:40", "train": "京阪 普通／急行", "no": "", "pf": "", "apf": "", "rec": false, "note": "每 5–10 分一班，刷 ICOCA"}, {"dep": "約 11:45", "arr": "約 12:00", "train": "地鐵烏丸線（今出川→京都）", "no": "", "pf": "", "apf": "", "rec": true, "note": "每 5–8 分一班；12:00 前回到京都站取行李"}], "tip": "私鐵與地鐵班次很密，不用記車次；月台照站內看板「出町柳方面」「京都・竹田方面」。"}, {"leg": "京都 → 天王寺（HARUKA）", "src": "https://timetable.jr-odekake.net/station-timetable/2784076001?date=20261017", "options": [{"dep": "12:30", "arr": "13:15", "train": "特急 HARUKA", "no": "1027M", "pf": "30", "apf": "15", "rec": false, "note": ""}, {"dep": "13:00", "arr": "13:45", "train": "特急 HARUKA", "no": "1029M", "pf": "30", "apf": "15", "rec": true, "note": "取行李後吃點東西再上車"}, {"dep": "13:30", "arr": "14:15", "train": "特急 HARUKA", "no": "1031M", "pf": "30", "apf": "15", "rec": false, "note": "最晚建議班"}], "tip": "每 30 分一班（:00／:30），京都 30 號月台在最西端，從八条口／中央口都要多走 5 分。"}, {"leg": "天王寺 → 梅田（御堂筋線）→ 大阪梅田 → 姫島（阪神）", "src": "", "options": [{"dep": "約 15:40", "arr": "約 16:00", "train": "御堂筋線（天王寺→梅田）", "no": "", "pf": "", "apf": "", "rec": false, "note": "每 3–4 分一班，約 15 分"}, {"dep": "約 16:10", "arr": "約 16:20", "train": "阪神本線 普通（大阪梅田→姫島）", "no": "", "pf": "", "apf": "", "rec": true, "note": "約 8–10 分；17:00 前到河堤"}], "tip": "花火日阪神會加開、急行臨時停姫島，實際依當天阪神公告；回程姫島站會限制進站，散場後可走到千船站分流。"}], "food": ["清水坂早上店家多 9:00 後才開，出發前在便利商店買咖啡麵包。", "早午餐：加茂みたらし茶屋的御手洗糰子（下鴨神社旁），或出町ふたば豆餅外帶。", "午餐：京都站拉麵小路或第一旭。"], "tips": ["京都飯店退房後寄放行李，下鴨神社後回來取件。", "回大阪後直接把行李放 RTI 再去看花火；不要帶行李到會場。", "關西廣域券第3天；計程車、京阪、地鐵、Metro 與阪神另付。清水寺門票 ¥500／人。花火採免費觀賞：河川敷 12:00 起可佔位（之前放的東西會被清除），每人約 1㎡；堤防上不可觀賞；梅田側（左岸）今年全面禁止進入。下雨照常施放，不能撐傘，請帶雨衣。"], "mapStops": ["清水寺", "二年坂", "祇園四条駅", "下鴨神社", "京都駅", "天王寺駅", "姫島駅 大阪"]}, {"date": "2026-10-18", "title": "奈良・宇治", "base": "RTI 天王寺", "items": ["奈良公園、東大寺、二月堂", "宇治平等院、宇治川與抹茶", "回大阪補買藥妝"], "legs": [{"leg": "天王寺 → 奈良（大和路快速）", "src": "https://timetable.jr-odekake.net/station-timetable/2993062002?date=20261018", "options": [{"dep": "08:20", "arr": "08:55", "train": "大和路快速", "no": "308K", "pf": "16", "apf": "", "rec": true, "note": "9 點前到奈良，鹿與東大寺人還少"}, {"dep": "08:35", "arr": "09:11", "train": "大和路快速", "no": "312K", "pf": "16", "apf": "", "rec": false, "note": ""}, {"dep": "08:50", "arr": "09:25", "train": "大和路快速", "no": "316K", "pf": "16", "apf": "", "rec": false, "note": ""}], "tip": "大和路快速每 15 分一班，天王寺 16 號月台。"}, {"leg": "奈良 → 宇治（奈良線）", "src": "https://timetable.jr-odekake.net/station-timetable/2981064001?date=20261018", "options": [{"dep": "12:37", "arr": "13:07", "train": "みやこ路快速", "no": "2624M", "pf": "", "apf": "", "rec": false, "note": ""}, {"dep": "13:07", "arr": "13:37", "train": "みやこ路快速", "no": "2626M", "pf": "", "apf": "", "rec": true, "note": "奈良逛到午餐後出發"}, {"dep": "13:37", "arr": "14:07", "train": "みやこ路快速", "no": "2628M", "pf": "", "apf": "", "rec": false, "note": ""}], "tip": "みやこ路快速每 30 分一班（:07／:37），宇治只要 30 分；普通車要 40 分以上。"}, {"leg": "宇治 → 京都 → 天王寺", "src": "https://timetable.jr-odekake.net/station-timetable/3017064001?date=20261018", "options": [{"dep": "16:07", "arr": "16:25", "train": "みやこ路快速", "no": "2636M", "pf": "", "apf": "10", "rec": true, "note": "京都 10 號到站，轉 30 號 HARUKA 約走 8 分"}, {"dep": "17:00", "arr": "17:46", "train": "特急 HARUKA", "no": "1045M", "pf": "30", "apf": "15", "rec": true, "note": "有 35 分緩衝"}, {"dep": "16:37", "arr": "16:55", "train": "みやこ路快速", "no": "2638M", "pf": "", "apf": "10", "rec": false, "note": "轉 17:30 HARUKA 1047M → 18:16"}], "tip": "京都站奈良線月台（8–10）在東南側，HARUKA（30）在西端，轉乘別抓太緊。"}], "food": ["奈良：麵闘庵巾著烏龍麵、天理スタミナラーメン或柿葉壽司，約 ¥800–1,500。", "東大寺小吃：中谷堂艾草麻糬、大佛布丁；釜飯排隊太久直接略過。", "宇治：伊藤久右衛門 JR宇治站前店抹茶蕎麥麵／甜點；只吃甜點可抓 ¥700–1,300。"], "tips": ["當天不退房，大行李留 RTI，只帶隨身包。", "若需寄物：JR奈良站或近鐵奈良站西閘口左側置物櫃；近鐵奈良觀光案內所也有有限人工寄存。", "關西廣域券第4天。市內以步行為主；奈良公園巴士若搭乘則另付ICOCA。"], "mapStops": ["天王寺駅", "奈良公園", "東大寺", "平等院", "宇治駅"]}, {"date": "2026-10-19", "title": "回程", "base": "返台", "items": ["08:10 天王寺搭 HARUKA 1007M（15號月台）", "目標09:00左右抵達KIX", "12:25航班，預留退稅、托運與安檢時間"], "legs": [{"leg": "天王寺 → 關西機場", "src": "https://timetable.jr-odekake.net/station-timetable/2993068001?date=20261019", "options": [{"dep": "07:37", "arr": "08:19", "train": "特急 HARUKA", "no": "1005M", "pf": "15", "apf": "", "rec": false, "note": "想更早到時"}, {"dep": "07:39", "arr": "08:32", "train": "關空快速／紀州路快速", "no": "5117M", "pf": "4", "apf": "", "rec": false, "note": "只能坐前 4 節（關空快速）"}, {"dep": "08:10", "arr": "08:51", "train": "特急 HARUKA", "no": "1007M", "pf": "15", "apf": "", "rec": true, "note": "兩件托運行李用廣域券劃座，9 點前到"}, {"dep": "08:13", "arr": "09:02", "train": "關空快速／紀州路快速", "no": "5121M", "pf": "4", "apf": "", "rec": false, "note": "只能坐前 4 節"}], "tip": "關空快速在日根野分車，後段開往和歌山，一定要上前 4 節「關西空港」車廂。"}], "food": ["早餐：天王寺站便利商店／飯店簡單吃，避免因餐廳排隊延誤", "機場：完成托運與安檢後再安排正餐或伴手禮"], "tips": ["不建議寄物；行李直接帶往機場。若航班改晚，可先寄RTI並設定最晚取件時間。", "直接使用關西廣域券，無須另買機場車票。"], "mapStops": ["天王寺駅", "関西国際空港"]}], "costs": [{"cat": "交通", "label": "JR 關西廣域券 5 日（10/15–10/19）", "local": 24000, "note": "¥12,000×2；含特急はしだて、京都丹後鐵道、嵯峨野線、奈良、宇治與回機場", "optional": false}, {"cat": "交通", "label": "10/14 關西機場→天王寺 JR", "local": 2200, "note": "約 ¥1,100×2，刷 ICOCA", "optional": false}, {"cat": "交通", "label": "10/14 大阪市區 Metro", "local": 1200, "note": "新世界、難波、心齋橋，約 ¥600×2", "optional": false}, {"cat": "交通", "label": "10/16 天橋立⇄伊根 丹海巴士", "local": 1600, "note": "單程 ¥400（兩區段各 ¥200）×來回×2", "optional": false}, {"cat": "交通", "label": "10/17 計程車 飯店→清水寺", "local": 1800, "note": "約15分，兩人合搭", "optional": false}, {"cat": "交通", "label": "10/17 京阪＋地鐵（祇園四条→出町柳→京都）", "local": 1080, "note": "(¥280＋¥260)×2", "optional": false}, {"cat": "交通", "label": "10/17 Metro＋阪神 往返姫島", "local": 1960, "note": "天王寺⇄梅田 ¥290、梅田⇄姫島 約 ¥200，來回×2", "optional": false}, {"cat": "交通", "label": "10/18 奈良市內巴士", "local": 1000, "note": "¥250×2趟×2（可步行省下）", "optional": false}, {"cat": "門票與活動", "label": "天橋立 View Land", "local": 1700, "note": "單軌／吊椅來回 ¥850×2", "optional": false}, {"cat": "門票與活動", "label": "伊根灣遊覽船", "local": 2400, "note": "¥1,200×2", "optional": false}, {"cat": "門票與活動", "label": "嵐山月灯路", "local": 3000, "note": "現場票 ¥1,500×2；網路票 ¥2,000×2 另加 ¥1,000", "optional": false}, {"cat": "門票與活動", "label": "清水寺", "local": 1000, "note": "¥500×2", "optional": false}, {"cat": "門票與活動", "label": "東大寺大佛殿", "local": 1600, "note": "¥800×2", "optional": false}, {"cat": "門票與活動", "label": "宇治平等院", "local": 1400, "note": "¥700×2", "optional": false}, {"cat": "門票與活動", "label": "淀川花火付費席", "local": 28000, "note": "付費席兩人約 ¥28,000（パノラマ席 ¥5,000／人起）；選免費觀賞則為 ¥0", "optional": true}, {"cat": "其他", "label": "天橋立站大型寄物櫃", "local": 1600, "note": "¥800×2天（兩件大行李箱需兩格則加倍）", "optional": false}, {"cat": "其他", "label": "京都住宿稅", "local": 800, "note": "每人每晚約 ¥400，入住時付現", "optional": false}], "foodLevels": {"save": 3500, "normal": 5500, "loose": 8000}, "checklist": ["KIX 領關西廣域券時一次劃好 HARUKA 與はしだて指定席", "預約與謝荘接駁：0772-22-3555", "嵐山月灯路決定現場票或網路票", "花火日 17:00 前到姫島河堤，帶墊子", "出發前一天再用官方時刻表確認班次與月台"]};
+const INTERESTS = ["美食","寺社與歷史","自然景觀","購物藥妝","溫泉","夜景與祭典","親子","攝影","博物館","咖啡甜點"];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => Math.round(n).toLocaleString("en-US");
+const enc = encodeURIComponent;
+let trip = EXAMPLE, fx = EXAMPLE.localToTwd, foodLevel = "normal", optionalOn = new Set();
+let live = {flight:null, hotels:null};
+let sample = null, db = null, downloads = null, ctl = null, currentDocId = null, lastReq = null;
+const LS_KEY='tripGenerator.trips';
+const lsGet=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]')}catch{return []}};
+const lsSet=v=>{try{localStorage.setItem(LS_KEY,JSON.stringify(v));return true}catch{return false}};
+
+/* ---------- form ---------- */
+const chipBox = $("interests");
+const picked = new Set(["美食","寺社與歷史","夜景與祭典"]);
+INTERESTS.forEach(t => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "chip"; b.textContent = t;
+  b.setAttribute("aria-pressed", picked.has(t));
+  b.onclick = () => { picked.has(t) ? picked.delete(t) : picked.add(t); b.setAttribute("aria-pressed", picked.has(t)); };
+  chipBox.append(b);
+});
+function fillForm(m){
+  $("dest").value = m.destination || ""; $("origin").value = m.origin || "TPE";
+  $("start").value = m.start || ""; $("end").value = m.end || ""; $("travelers").value = m.travelers || 2;
+  if (m.budgetTwd) $("budget").value = m.budgetTwd;
+  updateDayCount();
+}
+function nightsBetween(a,b){ const d=(new Date(b)-new Date(a))/864e5; return isFinite(d)?Math.round(d):0; }
+function updateDayCount(){ const n = nightsBetween($("start").value,$("end").value); $("dayCount").textContent = n>0 ? `${n+1} DAYS · ${n} NIGHTS` : "— DAYS"; }
+["start","end"].forEach(id => $(id).addEventListener("change", updateDayCount));
+
+/* ---------- links ---------- */
+const yymmdd = d => d ? d.slice(2).replace(/-/g,"") : "";
+function flightLinks(t){
+  const m=t.meta, o=(m.origin||"TPE").trim(), a=(t.flights?.arriveAirport||"").trim(), b=(t.flights?.departAirport||a).trim(), p=m.travelers||2;
+  const q = `Flights from ${o} to ${a} on ${m.start} through ${m.end} for ${p} adults`;
+  const L = [[`Google Flights`,`https://www.google.com/travel/flights?q=${enc(q)}&curr=TWD&hl=zh-TW`]];
+  if (/^[A-Z]{3}$/i.test(o) && /^[A-Z]{3}$/i.test(a)) L.push([`Skyscanner`,`https://www.skyscanner.com.tw/transport/flights/${o.toLowerCase()}/${a.toLowerCase()}/${yymmdd(m.start)}/${yymmdd(m.end)}/?adultsv2=${p}`]);
+  if (b && b!==a) L.push([`回程 ${b}（開口）`,`https://www.google.com/travel/flights?q=${enc(`Flights from ${o} to ${a} on ${m.start}, ${b} to ${o} on ${m.end}`)}&curr=TWD&hl=zh-TW`]);
+  return L;
+}
+function hotelLinks(name, s, p){
+  const q = `${name} ${s.city||""}`.trim();
+  return [
+    ["Booking",`https://www.booking.com/searchresults.zh-tw.html?ss=${enc(q)}&checkin=${s.checkin}&checkout=${s.checkout}&group_adults=${p}&no_rooms=1&group_children=0&selected_currency=TWD`],
+    ["Google 地圖",`https://www.google.com/maps/search/?api=1&query=${enc(q)}`],
+    ["Google 房價",`https://www.google.com/travel/search?q=${enc(q)}&hl=zh-TW&curr=TWD`]
+  ];
+}
+function routeLink(stops){
+  const s=(stops||[]).filter(Boolean); if (s.length<2) return "";
+  return `https://www.google.com/maps/dir/${s.map(x=>enc(x)).join("/")}`;
+}
+
+/* ---------- cost ---------- */
+const CATS = [["機票","--c2"],["住宿","--c1"],["交通","--c3"],["門票與活動","--c4"],["餐飲","--c5"],["其他","--muted"]];
+function costModel(t){
+  const p=t.meta.travelers||2, days=nightsBetween(t.meta.start,t.meta.end)+1, rooms=Math.max(1,Math.ceil(p/2));
+  const rows=[];
+  if (t.flights?.estTwdTotal) rows.push({cat:"機票",label:"來回機票（全員含行李）",twd:t.flights.estTwdTotal,note:t.flights.advice||""});
+  (t.stays||[]).forEach(s=>{
+    const n=Math.max(1,nightsBetween(s.checkin,s.checkout));
+    const priced=(s.candidates||[]).filter(c=>typeof c.estLocalPerNight==="number" && c.estLocalPerNight>0);
+    if (!priced.length){ rows.push({cat:"住宿",label:`${s.city} ${n} 晚`,twd:0,note:(s.candidates?.[0]?.note)||"未估價"}); return; }
+    const c=priced.reduce((a,b)=>a.estLocalPerNight<=b.estLocalPerNight?a:b);
+    rows.push({cat:"住宿",label:`${s.city}・${c.name}（${n} 晚×${rooms} 間）`,local:c.estLocalPerNight*n*rooms,note:"以最便宜候選計"});
+  });
+  (t.costs||[]).forEach((c,i)=>{
+    if (c.optional && !optionalOn.has(i)) return;
+    const cat=CATS.some(x=>x[0]===c.cat)?c.cat:"其他";
+    rows.push({cat,label:c.label,local:Number(c.local)||0,note:c.note||"",idx:i});
+  });
+  const food=(t.foodLevels||{})[foodLevel]||0;
+  if (food) rows.push({cat:"餐飲",label:`餐飲 ${days} 天×${p} 人`,local:food*days*p,note:{save:"省錢",normal:"一般",loose:"寬裕"}[foodLevel]});
+  rows.forEach(r=>{ if (r.twd==null) r.twd=(r.local||0)*fx; });
+  const total=rows.reduce((a,r)=>a+r.twd,0);
+  return {rows,total,per:total/p,p};
+}
+
+/* ---------- render ---------- */
+function render(){
+  const t=trip, m=t.meta, p=m.travelers||2, cur=t.currency||"";
+  const isEx = m.source==="example";
+  const cm = costModel(t);
+  const byCat = CATS.map(([c,v])=>[c,v,cm.rows.filter(r=>r.cat===c).reduce((a,r)=>a+r.twd,0)]).filter(x=>x[2]>0);
+  const optional=(t.costs||[]).map((c,i)=>[c,i]).filter(([c])=>c.optional);
+  const budgetLine = m.budgetTwd ? (cm.total<=m.budgetTwd ? `在預算 NT$${fmt(m.budgetTwd)} 內，剩約 NT$${fmt(m.budgetTwd-cm.total)}` : `超出預算 NT$${fmt(cm.total-m.budgetTwd)}`) : "";
+
+  $("out").innerHTML = `
+  ${m.source==="verified" ? `<div class="banner"><span><b>已實查</b>　查證日 ${esc(m.verifiedAt||"")}${live.flight?`；機票最新查價 ${esc(live.flight.checkedAt.replace("T"," "))}`:""}${live.hotels?`；飯店最新查價 ${esc(live.hotels.checkedAt.replace("T"," "))}`:""}。出發前仍請用官方連結再確認一次。</span></div>` : isEx ? `<div class="banner"><span><b>範例</b>　這是 2026/10 關西之旅用同一套方法做出的內容（班次與房價為實查）。填左邊條件按「產生整套行程」就會換成你的目的地。</span></div>`
+         : `<div class="banner"><span><b>AI 估算</b>　價格、班次與營業資訊來自 Claude 的既有知識，沒有即時查網路；訂之前用每項旁邊的連結確認。</span></div>`}
+  <div class="hero">
+    <div class="route">${esc(m.origin||"")} → ${esc(t.flights?.arriveAirport||"")}　${esc(m.start)} – ${esc(m.end)}　${p} 人</div>
+    <h2>${esc(t.title)}</h2>
+    <p>${esc(t.summary)}</p>
+    <div class="actions">
+      <button class="btn small" id="saveBtn" type="button">${currentDocId?"更新已存行程":"儲存這份行程"}</button>
+      <button class="btn small" id="dlBtn" type="button">下載 trip.json</button>
+      <button class="btn small" id="copyBtn" type="button">複製「深度查證」指令</button>
+    </div>
+  </div>
+  <nav class="jump" aria-label="段落"><a href="#s-cost">費用</a><a href="#s-flight">機票</a><a href="#s-stay">住宿</a><a href="#s-days">每日行程</a><a href="#s-check">待辦</a></nav>
+
+  <section class="block" id="s-cost"><h3>全程費用試算 <small>全員，新台幣</small></h3>
+    <div class="card">
+      <div class="total"><b>NT$${fmt(cm.total)}</b><span class="num">每人 NT$${fmt(cm.per)}</span><span style="color:${cm.total<=(m.budgetTwd||Infinity)?'var(--accent)':'var(--stamp)'}">${esc(budgetLine)}</span></div>
+      <div class="costbar" role="img" aria-label="費用組成">${byCat.map(([c,v,x])=>`<span style="width:${x/cm.total*100}%;background:var(${v})" title="${esc(c)} NT$${fmt(x)}"></span>`).join("")}</div>
+      <div class="legend">${byCat.map(([c,v,x])=>`<span><i style="background:var(${v})"></i>${esc(c)} <span class="num">NT$${fmt(x)}</span></span>`).join("")}</div>
+      <div class="controls">
+        <div class="field"><label for="foodSel">餐費等級</label><select id="foodSel">${[["save","省錢"],["normal","一般"],["loose","寬裕"]].map(([k,l])=>`<option value="${k}" ${k===foodLevel?"selected":""}>${l}（${cur} ${fmt((t.foodLevels||{})[k]||0)}／人日）</option>`).join("")}</select></div>
+        <div class="field"><label for="fxIn">匯率 1 ${esc(cur)} = NT$</label><input id="fxIn" type="number" step="0.001" min="0" value="${fx}"></div>
+        ${optional.map(([c,i])=>`<label style="display:flex;gap:6px;align-items:center;font-size:13px"><input type="checkbox" data-opt="${i}" ${optionalOn.has(i)?"checked":""} style="width:auto">${esc(c.label)}</label>`).join("")}
+      </div>
+      <details class="more"><summary>明細（${cm.rows.length} 項）</summary>
+        <div class="tablewrap"><table><thead><tr><th>類別</th><th>項目</th><th class="r">${esc(cur)}</th><th class="r">NT$</th><th>備註</th></tr></thead><tbody>
+        ${cm.rows.map(r=>`<tr><td>${esc(r.cat)}</td><td>${esc(r.label)}</td><td class="r">${r.local!=null?fmt(r.local):"—"}</td><td class="r">${fmt(r.twd)}</td><td>${esc(r.note)}</td></tr>`).join("")}
+        </tbody></table></div></details>
+    </div>
+  </section>
+
+  <section class="block" id="s-flight"><h3>機票 <small>${esc(t.flights?.arriveAirport||"")} 進 ${esc(t.flights?.departAirport||"")} 出</small></h3>
+    <div class="card">
+      <div class="kv"><span>估計（全員含行李）</span><span class="num">NT$${fmt(t.flights?.estTwdTotal||0)}</span></div>
+      ${live.flight?`<div class="kv" style="color:var(--accent)"><span>最新查價（${esc(live.flight.checkedAt.replace("T"," "))}）</span><span class="num">NT$${fmt(live.flight.options?.[0]?.totalEst||0)}</span></div><p style="margin:0;font-size:13px">${esc(live.flight.summary)}</p>`:""}
+      <p style="margin:0">${esc(t.flights?.advice)}</p>
+      ${(t.flights?.tips||[]).length?`<ul class="clean">${t.flights.tips.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+      <div class="links">${flightLinks(t).map(([l,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(l)} ↗</a>`).join("")}</div>
+    </div>
+    ${(t.passes||[]).length?`<div class="grid2">${t.passes.map(x=>`<div class="card"><div class="kv"><strong>${esc(x.name)}</strong><span class="num">${esc(cur)} ${fmt(x.priceLocal||0)}</span></div><div style="font-size:13px">${esc(x.covers)}</div><div style="font-size:13px;color:var(--accent)">${esc(x.verdict)}</div></div>`).join("")}</div>`:""}
+  </section>
+
+  <section class="block" id="s-stay"><h3>住宿 <small>依晚分段，含日期與人數的搜尋連結</small></h3>
+    <div class="grid2">${(t.stays||[]).map(s=>`<div class="card stay">
+      <h4>${esc(s.city)}・${esc(s.area)}</h4>
+      <div class="base num">${esc(s.checkin)} → ${esc(s.checkout)}（${Math.max(1,nightsBetween(s.checkin,s.checkout))} 晚）</div>
+      <div style="font-size:13px">${esc(s.why)}</div>
+      ${(s.candidates||[]).map(c=>`<div class="cand"><div class="top"><strong>${esc(c.name)}</strong><span class="price">${typeof c.estLocalPerNight==="number"?`${esc(cur)} ${fmt(c.estLocalPerNight)}／晚 ≈ NT$${fmt(c.estLocalPerNight*fx)}`:""}</span></div>
+        ${c.note?`<div style="font-size:12px;color:var(--muted)">${esc(c.note)}</div>`:""}
+        ${liveHotel(c)}
+        <div class="links">${[...(c.agodaUrl?[["Agoda",c.agodaUrl]]:[]),...(c.jalanUrl?[["じゃらん",c.jalanUrl]]:[]),...(c.url?[["官網",c.url]]:[]),...hotelLinks(c.name,s,p)].map(([l,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(l)} ↗</a>`).join("")}</div></div>`).join("")}
+    </div>`).join("")}</div>
+  </section>
+
+  <section class="block" id="s-days"><h3>每日行程 <small>紅章＝建議班次</small></h3>
+    ${(t.days||[]).map(d=>{const rl=routeLink(d.mapStops); return `<article class="card day">
+      <div class="dayhead"><span class="date">${esc((d.date||"").slice(5))}</span><h4>${esc(d.title)}</h4><span class="base">住 ${esc(d.base)}</span></div>
+      <ul class="clean">${(d.items||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+      ${rl?`<div class="links"><a href="${esc(rl)}" target="_blank" rel="noopener noreferrer">今日路線 Google 地圖 ↗</a></div>`:""}
+      ${(d.legs||[]).map(l=>`<div class="leg"><div class="legname"><span>🚆 ${esc(l.leg)}</span>${l.src?`<a href="${esc(l.src)}" target="_blank" rel="noopener noreferrer">官方時刻表 ↗</a>`:""}</div>
+        ${(l.options||[]).map(o=>`<div class="tr ${o.rec?"rec":""}"><div class="t">${esc(o.dep)}<small> → ${esc(o.arr)}</small></div><div>${o.rec?'<span class="stamp">建議</span>':""}${esc(o.train)}${o.no?` <small class="num" style="color:var(--muted)">${esc(o.no)}</small>`:""}</div><div class="pf">${o.pf?`${esc(o.pf)} 號月台`:""}${o.pf&&o.apf?"<br>":""}${o.apf?`到 ${esc(o.apf)} 號`:""}</div>${o.note?`<div class="nt">${esc(o.note)}</div>`:""}</div>`).join("")}
+        ${l.tip?`<div class="note">💡 ${esc(l.tip)}</div>`:""}</div>`).join("")}
+      ${(d.food||[]).length||(d.tips||[]).length?`<details class="more"><summary>吃什麼・注意事項</summary><ul class="clean">${(d.food||[]).map(x=>`<li>🍜 ${esc(x)}</li>`).join("")}${(d.tips||[]).map(x=>`<li>🧳 ${esc(x)}</li>`).join("")}</ul></details>`:""}
+    </article>`}).join("")}
+  </section>
+
+  <section class="block" id="s-check"><h3>出發前待辦</h3>
+    <div class="card"><ul class="clean checklist">${(t.checklist||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>
+  </section>`;
+
+  $("foodSel").onchange = e => { foodLevel=e.target.value; render(); };
+  $("fxIn").onchange = e => { const v=parseFloat(e.target.value); if (v>0){ fx=v; render(); } };
+  document.querySelectorAll("[data-opt]").forEach(cb => cb.onchange = () => { const i=+cb.dataset.opt; cb.checked?optionalOn.add(i):optionalOn.delete(i); render(); });
+  $("copyBtn").onclick = copyVerify;
+  $("saveBtn").onclick = saveTrip;
+  $("dlBtn").onclick = downloadTrip;
+}
+
+function liveHotel(c){
+  const r=c.trackId && live.hotels?.hotels?.[c.trackId]; if(!r) return "";
+  const j=r.jalan||{}, b=r.booking||{};
+  const parts=[];
+  if (j.available && j.min) parts.push(`じゃらん ¥${fmt(j.min)}${j.roomsLeft?`（剩 ${j.roomsLeft} 間）`:""}`);
+  else if (j.calendar!==undefined && !j.error) parts.push("じゃらん 客滿");
+  if (b.found && !b.soldOut && b.price) parts.push(`Booking NT$${fmt(b.price)}`);
+  return parts.length?`<div style="font-size:12px;color:var(--accent);font-weight:500">即時：${esc(parts.join("　"))}</div>`:"";
+}
+/* ---------- actions ---------- */
+function toast(msg){ const el=$("toast"); el.textContent=msg; el.hidden=false; clearTimeout(toast.t); toast.t=setTimeout(()=>el.hidden=true,2600); }
+async function copyVerify(){
+  const m=trip.meta;
+  const txt = `用 japan-trip-planner 的方法幫我查證並建追蹤網站（實查即時票價、房價、官方時刻表與月台，產生 GitHub Pages＋Actions 自動查價）：\n目的地：${m.destination}\n日期：${m.start} – ${m.end}，${m.travelers} 人，出發 ${m.origin}\n以下是初稿 JSON：\n${JSON.stringify(trip).slice(0,12000)}`;
+  try { await navigator.clipboard.writeText(txt); toast("已複製，貼到 Claude 對話即可"); }
+  catch { const ta=document.createElement("textarea"); ta.value=txt; document.body.append(ta); ta.select(); toast("請按 Ctrl/⌘+C 複製"); setTimeout(()=>ta.remove(),8000); }
+}
+async function saveTrip(){
+  if (!db){
+    const list=lsGet(); const id=currentDocId||('t'+Date.now().toString(36));
+    const body={id,title:trip.title,destination:trip.meta.destination,start:trip.meta.start,end:trip.meta.end,savedAt:new Date().toISOString(),trip};
+    const i=list.findIndex(x=>x.id===id); i>=0?list[i]=body:list.unshift(body);
+    if (lsSet(list.slice(0,30))){ currentDocId=id; toast("已存在這台裝置的瀏覽器"); render(); renderSaved(localDocs()); } else toast("這個瀏覽器不允許儲存，請改用下載 trip.json");
+    return;
+  }
+  const btn=$("saveBtn"); btn.disabled=true;
+  try {
+    const body={title:trip.title,destination:trip.meta.destination,start:trip.meta.start,end:trip.meta.end,savedAt:new Date().toISOString(),trip:JSON.parse(JSON.stringify(trip))};
+    if (currentDocId) await db.doc(`trips/${currentDocId}`).set(body);
+    else { const ref=await db.collection("trips").add(body); currentDocId=ref.id; }
+    toast("已儲存"); render();
+  } catch(e){ toast(e?.code==="quota_exceeded"?"存放空間已滿，請先刪除舊行程":"沒有存成功："+(e?.message||e?.code||"")); btn.disabled=false; }
+}
+async function downloadTrip(){
+  const name=`trip-${(trip.meta.destination||"trip").replace(/[\\/:*?"<>|\s]+/g,"-").slice(0,40)}-${trip.meta.start}.json`;
+  if (!downloads){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(trip,null,1)],{type:"application/json"})); a.download=name; document.body.append(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); return; }
+  try { await downloads.save({filename:name,data:JSON.stringify(trip,null,1)}); toast("已下載"); }
+  catch(e){ if (e?.code!=="declined") toast("無法下載："+(e?.code||"")); }
+}
+function renderSaved(docs){
+  $("savedBox").hidden=false;
+  $("savedCount").textContent=docs.length?`${docs.length}`:"";
+  $("savedList").innerHTML = docs.length ? docs.map(d=>{const v=d.data()||{};return `<div class="it"><span title="${esc(v.title)}">${esc(v.start||"")}　${esc(v.destination||v.title||"")}</span><span style="display:flex;gap:4px;flex:none"><button class="btn small" data-open="${esc(d.id)}" type="button">開啟</button><button class="btn small" data-del="${esc(d.id)}" type="button" aria-label="刪除">刪除</button></span></div>`}).join("")
+    : `<p class="note">還沒有存下的行程。產生後按「儲存這份行程」，換裝置也能打開。</p>`;
+  const map=Object.fromEntries(docs.map(d=>[d.id,d.data()]));
+  $("savedList").querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{const v=map[b.dataset.open]; if(!v?.trip) return; trip=v.trip; fx=trip.localToTwd||fx; optionalOn=new Set(); currentDocId=b.dataset.open; fillForm(trip.meta); render(); window.scrollTo({top:0,behavior:"smooth"});});
+  $("savedList").querySelectorAll("[data-del]").forEach(b=>{
+    b.onclick=async()=>{ if (b.dataset.arm!=="1"){ b.dataset.arm="1"; b.textContent="確定刪除"; setTimeout(()=>{b.dataset.arm="";b.textContent="刪除";},3000); return; }
+      try{ if(db) await db.doc(`trips/${b.dataset.del}`).delete(); else { lsSet(lsGet().filter(x=>x.id!==b.dataset.del)); renderSaved(localDocs()); } if (currentDocId===b.dataset.del){currentDocId=null; render();} }catch(e){ toast("刪除失敗"); } };
+  });
+}
+
+const localDocs=()=>lsGet().map(x=>({id:x.id,data:()=>x}));
+/* ---------- generation ---------- */
+const SCHEMA = `{
+ "title": "行程標題（10–20 字）",
+ "summary": "2–3 句說明整體路線與亮點",
+ "currency": "當地貨幣代碼，如 JPY / KRW / THB / EUR",
+ "localToTwd": 1 單位當地貨幣換新台幣的近似匯率（數字）,
+ "flights": {"arriveAirport":"IATA","departAirport":"IATA","estTwdTotal":全員含行李來回估價（數字）,"advice":"建議航空公司/時段組合與理由（符合抵達與起飛時間限制）","tips":["…"]},
+ "passes": [{"name":"交通票券","priceLocal":數字,"covers":"涵蓋範圍","verdict":"划不划算與原因"}],
+ "stays": [{"city":"城市","checkin":"YYYY-MM-DD","checkout":"YYYY-MM-DD","area":"建議住的區域","why":"理由（交通、行李、隔天行程）","candidates":[{"name":"真實存在的飯店正式名稱","estLocalPerNight":每間每晚估價（數字，未知用 null）,"note":"房型/衛浴/接駁/注意"}]}],
+ "days": [{"date":"YYYY-MM-DD","title":"當日主題","base":"當晚住哪個城市/區域","items":["依時間排序的行程（含建議時間）"],
+   "legs":[{"leg":"A → B（路線名）","options":[{"dep":"HH:MM","arr":"HH:MM","train":"車種或交通方式","no":"","pf":"","apf":"","rec":true,"note":"為何建議"}],"tip":"轉乘/購票/陷阱提醒"}],
+   "food":["平價在地吃法與區域"],"tips":["寄物、營業時間、票券、人潮等提醒"],"mapStops":["可在 Google 地圖搜尋的地點名（當地語言），依順序 2–7 個"]}],
+ "costs": [{"cat":"交通 | 門票與活動 | 其他","label":"項目","local":全員合計當地幣（數字）,"note":"算法，如 ¥500×2","optional":false}],
+ "foodLevels": {"save":每人每日當地幣,"normal":…,"loose":…},
+ "checklist": ["出發前要自己完成的事：訂位、劃位、預約、簽證/入境登記、網卡…"]
+}`;
+function buildPrompt(req){
+  return `你是資深自由行規劃師。依下列條件產生完整旅程，用繁體中文（地名可附當地文字）。
+只回覆一個 JSON 物件，不要其他文字，格式如下：
+${SCHEMA}
+
+條件：
+- 目的地：${req.destination}
+- 出發機場：${req.origin}；日期 ${req.start} 出發、${req.end} 回程；共 ${req.days} 天 ${req.days-1} 晚；${req.travelers} 人
+- 去程抵達不晚於 ${req.arriveBy}；回程起飛不早於 ${req.departAfter}；航空偏好：${req.airline}
+- 總預算 NT$${req.budget}（全員）；每晚住宿上限約 NT$${req.hotelBudget}（一間）
+- 步調：${req.pace}；興趣：${req.interests.join("、")||"不限"}
+- 行李：${req.luggage}
+- 其他：${req.notes||"無"}
+
+規則：
+1. days 必須逐日涵蓋 ${req.start} 到 ${req.end}，第一天含機場進城，最後一天含回機場並預留國際線 3 小時。
+2. stays 的日期要連續涵蓋每一晚；每段給 2–3 間真實存在的候選，偏向交通方便、有獨立衛浴、在預算內。換城市時說明行李怎麼處理。
+3. legs 只放需要搭車的段落，每段 2–3 個 options，恰好一個 rec=true。時刻用你所知的典型班距推估；車次 no 與月台 pf/apf 除非非常確定否則留空字串，不要編造。
+4. 考慮日期當週的季節、節日、平日/假日與已知活動；有特殊活動寫進 items 或 tips。
+5. 價格都用你所知的一般水準估計，寧可略高；不要虛構折扣。costs 不含機票、住宿、餐費（這三項另外計算）。
+6. 字數精簡：items 每天 3–6 條、每條 40 字內；food 與 tips 各最多 3 條。`;
+}
+function normalize(raw, req){
+  const t = (raw && typeof raw==="object") ? raw : {};
+  const arr = v => Array.isArray(v) ? v : [];
+  t.days = arr(t.days).map(d=>({...d, items:arr(d.items), legs:arr(d.legs).map(l=>({...l, options:arr(l.options)})), food:arr(d.food), tips:arr(d.tips), mapStops:arr(d.mapStops)}));
+  t.stays = arr(t.stays).map(s=>({...s, candidates:arr(s.candidates)}));
+  t.costs = arr(t.costs); t.passes = arr(t.passes); t.checklist = arr(t.checklist);
+  t.flights = t.flights && typeof t.flights==="object" ? t.flights : {};
+  t.flights.tips = arr(t.flights.tips);
+  t.foodLevels = t.foodLevels || {};
+  t.localToTwd = Number(t.localToTwd) > 0 ? Number(t.localToTwd) : 1;
+  t.meta = {destination:req.destination, origin:req.origin, start:req.start, end:req.end, travelers:req.travelers, budgetTwd:req.budget, source:"ai", generatedAt:new Date().toISOString().slice(0,10)};
+  if (!t.title) t.title = req.destination;
+  if (!t.days.length) throw {code:"empty_plan"};
+  return t;
+}
+const ERR = {
+  not_granted:"沒有取得使用 Claude 的同意，無法產生。", sampling_disabled:"這個帳號目前不能從頁面呼叫 Claude。",
+  rate_limited:"使用量已達上限或太頻繁，請稍後再試。", session_expired:"登入已過期，請重新登入 Claude。",
+  invalid_json:"回覆格式不完整，請再按一次；天數很多時可先縮短行程。", refused:"這次的內容無法產生，請調整條件。",
+  prompt_too_large:"條件太長，請縮短「其他條件」。", empty_plan:"沒有產生出每日行程，請再試一次。",
+  upstream_error:"連線中斷，請再按一次。"
+};
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const st=$("status"); st.className="status";
+  const req = {destination:$("dest").value.trim(), origin:$("origin").value.trim()||"TPE", start:$("start").value, end:$("end").value,
+    travelers:Math.max(1,parseInt($("travelers").value)||1), arriveBy:$("arriveBy").value||"不限", departAfter:$("departAfter").value||"不限",
+    budget:parseInt($("budget").value)||0, hotelBudget:parseInt($("hotelBudget").value)||0, pace:$("pace").value, airline:$("airline").value,
+    interests:[...picked], luggage:$("luggage").value.trim(), notes:$("notes").value.trim()};
+  const n = nightsBetween(req.start, req.end);
+  if (!req.destination){ st.className="status err"; st.textContent="請填目的地。"; $("dest").focus(); return; }
+  if (!(n>=1)){ st.className="status err"; st.textContent="回程日要晚於去程日。"; return; }
+  if (n>13){ st.className="status err"; st.textContent="一次最多 14 天，較長的旅程請分段產生。"; return; }
+  req.days = n+1; lastReq = req;
+  if (!sample){ $("manual").hidden=false; $("promptOut").value=buildPrompt(req); st.textContent="已產生提示詞，照下方 ①② 操作。"; $("promptOut").scrollIntoView({behavior:"smooth",block:"center"}); return; }
+  ctl = new AbortController();
+  $("go").disabled=true; $("progress").hidden=false; $("progTxt").textContent="思考中…"; st.textContent="";
+  const t0=Date.now(); const tick=setInterval(()=>{ if ($("progTxt").dataset.chars) return; $("progTxt").textContent=`思考中… ${Math.round((Date.now()-t0)/1000)} 秒`; },1000);
+  $("progTxt").dataset.chars="";
+  try {
+    const raw = await sample.json(buildPrompt(req), {signal:ctl.signal, cache:false, modelTier:"default",
+      onText:({text})=>{ const days=(text.match(/"date"\s*:/g)||[]).length; $("progTxt").dataset.chars="1"; $("progTxt").textContent=`撰寫中… 第 ${Math.min(days,req.days)}／${req.days} 天　${Math.round((Date.now()-t0)/1000)} 秒`; }});
+    trip = normalize(raw, req); fx = trip.localToTwd; optionalOn = new Set(); currentDocId = null; foodLevel="normal";
+    render(); st.textContent=`完成，約 ${Math.round((Date.now()-t0)/1000)} 秒。`;
+    window.scrollTo({top:0,behavior:"smooth"});
+  } catch(err){
+    if (err?.code!=="cancelled"){ st.className="status err"; st.textContent = ERR[err?.code] || ERR.upstream_error; }
+    else st.textContent="已停止。";
+  } finally { clearInterval(tick); $("go").disabled=false; $("progress").hidden=true; }
+});
+$("stop").onclick = () => ctl?.abort();
+$("copyPrompt").onclick = async () => { const v=$("promptOut").value; try{ await navigator.clipboard.writeText(v); toast("已複製"); }catch{ $("promptOut").select(); toast("請按 Ctrl/⌘+C 複製"); } };
+$("applyAnswer").onclick = () => {
+  const st=$("status"); st.className="status";
+  let txt=$("answerIn").value.trim(); const f=txt.match(/```(?:json)?\s*([\s\S]*?)```/); if (f) txt=f[1];
+  const a=txt.indexOf("{"), b=txt.lastIndexOf("}");
+  try {
+    if (!lastReq) throw {code:"noreq"};
+    const raw=JSON.parse(txt.slice(a,b+1));
+    trip=normalize(raw,lastReq); fx=trip.localToTwd; optionalOn=new Set(); currentDocId=null; foodLevel="normal";
+    render(); st.textContent="已套用。"; window.scrollTo({top:0,behavior:"smooth"});
+  } catch(e){ st.className="status err"; st.textContent = e?.code==="noreq" ? "請先按「產生提示詞」再貼回結果。" : e?.code==="empty_plan" ? ERR.empty_plan : "貼上的內容不是完整的 JSON，請確認整段都有複製（Claude 回覆太長被截斷時，請它「繼續」後合併）。"; }
+};
+
+/* ---------- boot ---------- */
+async function loadRepoTrip(){
+  let slug=null; try{ slug=new URLSearchParams(location.search).get("trip"); }catch{}
+  if (location.protocol!=="https:" && location.protocol!=="http:") return;
+  try {
+    const idx=await fetch("trips/index.json",{cache:"no-store"}).then(r=>r.ok?r.json():[]);
+    if (Array.isArray(idx) && idx.length){
+      const box=document.createElement("div"); box.className="saved";
+      box.innerHTML=`<div class="ticket-head"><span>VERIFIED TRIPS</span><span>${idx.length}</span></div>`+idx.map(x=>`<div class="it"><span>${esc(x.start||"")}　${esc(x.title||x.slug)}</span><a class="btn small" style="text-decoration:none" href="?trip=${enc(x.slug)}">開啟</a></div>`).join("");
+      document.querySelector("aside.panel").append(box);
+    }
+  } catch {}
+  if (!slug || !/^[a-z0-9-]+$/i.test(slug)) return;
+  try {
+    const base=`trips/${slug}/`;
+    const t=await fetch(base+"trip.json",{cache:"no-store"}).then(r=>{if(!r.ok) throw 0; return r.json();});
+    // meta.liveDataDir：價格由別的 repo 追蹤時，指向它 GitHub Pages 上的 data/（只接受 https://*.github.io/…/）
+    const ld=t.meta?.liveDataDir, dataBase=(typeof ld==="string" && /^https:\/\/[a-z0-9-]+\.github\.io\/[\w.\/-]*\/$/i.test(ld)) ? ld : base+"data/";
+    const [fh,hh]=await Promise.all([fetch(dataBase+"history.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null), fetch(dataBase+"hotels.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null)]);
+    live={flight:Array.isArray(fh)&&fh.length?fh[fh.length-1]:null, hotels:Array.isArray(hh)&&hh.length?hh[hh.length-1]:null};
+    const om={...(t.meta||{})}; trip=normalize(t,om); trip.meta={...om, source:om.source||"verified"}; fx=trip.localToTwd; fillForm(trip.meta); render();
+    document.title=`${trip.title}｜旅程產生器`;
+  } catch { $("status").className="status err"; $("status").textContent=`找不到行程「${slug}」。`; }
+}
+fillForm({destination:"", origin:"TPE", start:"", end:"", travelers:2, budgetTwd:60000});
+$("dest").placeholder = "例：北海道 札幌・小樽・富良野";
+render();
+loadRepoTrip();
+(async () => {
+  const manualMode = () => { $("go").textContent="產生提示詞"; $("modeNote").textContent="這個網址不能直接呼叫 Claude：按下後會產生提示詞，貼到你的 Claude（不需 API 金鑰），再把回覆貼回來。已存的行程只存在這台裝置的瀏覽器，也可下載 trip.json。"; renderSaved(localDocs()); };
+  if (!window.claude?.use){ manualMode(); return; }
+  const [s, d, dl] = await Promise.all([claude.use("sample"), claude.use("db"), claude.use("downloads")]);
+  sample = s; db = d; downloads = dl;
+  if (!sample) manualMode();
+  render();
+  if (!db && sample) renderSaved(localDocs());
+  if (db){
+    db.collection("trips").orderBy("savedAt","desc").limit(30).onSnapshot(snap=>renderSaved(snap.docs), ()=>{$("savedBox").hidden=true;});
+  }
+})();
+</script>
