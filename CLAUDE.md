@@ -24,6 +24,7 @@
 | `hotel_tracker.py --trip trips/<slug>` | じゃらん（主）＋Booking（輔）查房價；讀 `<trip>/hotels.json`，寫 `<trip>/data/hotels.json` |
 | `.github/workflows/track.yml` | 每天 09:17／21:17（台北）查所有有 config.json／hotels.json 的 `trips/*/`；沒有就直接結束 |
 | `.claude/commands/plan-trip.md`、`.claude/agents/` | `/plan-trip` 與 5 個分工 agent |
+| `agent_server.py`、`windows/start_agent.bat` | **本機 agent**：開 http://localhost:8787 就是產生器，按「產生行程」在這台電腦跑 plan_trip.py（訂閱額度、只收本機連線、同時只跑一趟）；結果在 trips/，不 commit/push |
 | `plan_trip.py` | **快速規劃（10 分內）**：初稿 → 4 路平行查證（外部 timeout）＋ `tracker.py` 機票實查＋`tools/jalan_search.py` 住宿實價 → 程式合併 → 一致性整合。不 commit／push |
 | `tools/jalan_search.py` | じゃらん車站周邊一覽（含稅總價、從車站步行／巴士分鐘）；車站代碼快取在 `tools/jalan_codes.json` |
 | `tools/wiki_photos.py` | 景點實景照片（維基百科代表圖，Commons 自由授權、附作者）；`--trip trips/<slug>` 替每天加 photos；快取 `tools/wiki_photos_cache.json` |

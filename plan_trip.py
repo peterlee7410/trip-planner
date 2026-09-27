@@ -298,7 +298,8 @@ def run_stays(a, d, t, deadline_at):
         left = deadline_at - time.monotonic() - a.merge_reserve
         rooms = max(1, -(-a.travelers // 2))
         nights = max(1, (dt.date.fromisoformat(a.end) - dt.date.fromisoformat(a.start)).days)
-        per_night = round(a.budget * a.hotel_share / nights / float(t.get("localToTwd") or 0.21))
+        twd = a.hotel_budget * max(1, -(-a.travelers // 2)) if a.hotel_budget else a.budget * a.hotel_share / nights
+        per_night = round(twd / float(t.get("localToTwd") or 0.21))  # 全員每晚，當地幣
         prompt = PICK_STAYS.format(slug=a.slug, rooms=rooms, adults=a.travelers, minutes=max(1, int(left // 60)),
                                    cur=t.get("currency", "JPY"), per_night=per_night)
         _, to = run_claude(prompt, left, ("Read", f"Write(trips/{a.slug}/research/*)"))
@@ -542,10 +543,10 @@ def decide_flights(a, d, by_airport, draft):
 RECONCILE = """下面是一份旅程 JSON，各段由不同人分別查證，可能互相矛盾。只檢查並修正：
 1. 第一天機場進城的交通時刻要在去程班機抵達（flights.outbound.arr，若沒有就看 flights.advice）之後 45–90 分鐘內出發（入境與領行李至少 45 分）；
 2. 最後一天去機場的交通要在回程班機起飛（flights.return.dep）前至少 2 小時抵達機場；
-3. 第一天與最後一天 items 的時間要和上述一致，不要安排在飛機起飛後或抵達前的活動；
+3. 第一天與最後一天 items 與 map（每日地圖站點的 sub 時間）要和上述一致，不要安排在飛機起飛後或抵達前的活動；
 4. 機場段 legs 要用 flights.arriveAirport／departAirport 這個機場。如果原本寫的是別的機場，就改寫成這個機場到住宿區的一般路線
    （每段 2–3 個 options、恰好一個 rec=true，時刻依班距推估，note 標「估」）。
-不要使用任何工具，不要改其他欄位。只回覆一個 JSON：{"days": {"YYYY-MM-DD": {"items": [...], "legs": [...]}}}，只放需要修改的日期（legs 格式同原本，每段恰好一個 rec=true）；都一致就回 {"days": {}}。
+不要使用任何工具，不要改其他欄位。只回覆一個 JSON：{"days": {"YYYY-MM-DD": {"items": [...], "legs": [...], "map": [...]}}}，只放需要修改的日期（legs 格式同原本，每段恰好一個 rec=true）；都一致就回 {"days": {}}。
 旅程 JSON：
 """
 
@@ -573,7 +574,7 @@ def reconcile(a, d, deadline_at):
     t = json.loads(before)
     for day in t["days"]:
         for k, v in (fix.get(day["date"]) or {}).items():
-            if k in ("items", "legs") and isinstance(v, list):
+            if k in ("items", "legs", "map") and isinstance(v, list):
                 day[k] = v
     path.write_text(json.dumps(t, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     errs = validate.check(a.slug)
@@ -622,6 +623,7 @@ def main():
     ap.add_argument("--hour-value", type=int, default=800,
                     help="在目的地每多 1 小時值多少台幣（全員），用來和票價取捨")
     ap.add_argument("--hotel-share", type=float, default=0.35, help="總預算中住宿約占多少比例（給挑選員參考）")
+    ap.add_argument("--hotel-budget", type=int, default=0, help="每晚每間住宿上限（NT$）；有填就不用 --hotel-share")
     ap.add_argument("--allow-redeye", action="store_true", help="紅眼班也納入比較（預設排除，除非全部都是紅眼）")
     ap.add_argument("--bags", type=int, default=1, help="全員每段托運行李總件數（LCC 會加行李費）")
     ap.add_argument("--draft-only", action="store_true")

@@ -248,6 +248,7 @@ function pickedFlight(){
   return flightPick==null ? (opts.find(o=>!/紅眼/.test(o.note||""))||opts[0]) : (opts[flightPick]||null);
 }
 let sample = null, db = null, downloads = null, ctl = null, currentDocId = null, lastReq = null;
+let agent = null, agentJob = null;  // 本機 agent 伺服器（agent_server.py）有開時才有值
 const LS_KEY='tripGenerator.trips';
 const lsGet=()=>{try{return JSON.parse(localStorage.getItem(LS_KEY)||'[]')}catch{return []}};
 const lsSet=v=>{try{localStorage.setItem(LS_KEY,JSON.stringify(v));return true}catch{return false}};
@@ -626,6 +627,7 @@ $("form").addEventListener("submit", async e => {
   if (!(n>=1)){ st.className="status err"; st.textContent="回程日要晚於去程日。"; return; }
   if (n>13){ st.className="status err"; st.textContent="一次最多 14 天，較長的旅程請分段產生。"; return; }
   req.days = n+1; lastReq = req;
+  if (agent) return runAgent(req);
   if (!sample){ $("manual").hidden=false; $("promptOut").value=buildPrompt(req); st.textContent="已產生提示詞，照下方 ①② 操作。"; $("promptOut").scrollIntoView({behavior:"smooth",block:"center"}); return; }
   ctl = new AbortController();
   $("go").disabled=true; $("progress").hidden=false; $("progTxt").textContent="思考中…"; st.textContent="";
@@ -642,7 +644,35 @@ $("form").addEventListener("submit", async e => {
     else st.textContent="已停止。";
   } finally { clearInterval(tick); $("go").disabled=false; $("progress").hidden=true; }
 });
-$("stop").onclick = () => ctl?.abort();
+$("stop").onclick = () => agentJob ? fetch(`/api/jobs/${agentJob}/cancel`, {method:"POST", headers:{"Content-Type":"application/json"}, body:"{}"}) : ctl?.abort();
+
+/* ---------- 本機 agent：POST /api/plan，輪詢進度，完成後打開新行程 ---------- */
+async function runAgent(req){
+  const st=$("status"); st.className="status"; st.textContent="";
+  let job;
+  try {
+    const r = await fetch("/api/plan", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(req)});
+    job = await r.json();
+    if (!r.ok) throw new Error(job.error||"無法啟動");
+  } catch(e){ st.className="status err"; st.textContent=`無法啟動：${e.message}`; return; }
+  agentJob = job.id;
+  $("go").disabled=true; $("progress").hidden=false;
+  const step = log => { const l=[...log].reverse().find(x=>/^\[\s*\d+s\]/.test(x)); return l ? l.replace(/^\[\s*(\d+)s\]\s*/,"") : "啟動中…"; };
+  try {
+    for (;;){
+      await new Promise(r=>setTimeout(r,2000));
+      job = await fetch(`/api/jobs/${job.id}`,{cache:"no-store"}).then(r=>r.json());
+      $("progTxt").textContent = `${Math.floor(job.elapsed/60)} 分 ${job.elapsed%60} 秒｜${step(job.log)}`;
+      if (job.status==="done"){ st.textContent="完成，正在打開新行程…"; location.href=`?trip=${encodeURIComponent(job.slug)}`; return; }
+      if (job.status!=="running"){
+        st.className="status err";
+        st.textContent = job.status==="cancelled" ? "已停止。" : `產生失敗：${step(job.log)}（完整紀錄在執行 agent_server.py 的視窗）`;
+        return;
+      }
+    }
+  } catch(e){ st.className="status err"; st.textContent="和本機 agent 的連線中斷，請確認 agent_server.py 還在執行。"; }
+  finally { agentJob=null; $("go").disabled=false; $("progress").hidden=true; }
+}
 $("copyPrompt").onclick = async () => { const v=$("promptOut").value; try{ await navigator.clipboard.writeText(v); toast("已複製"); }catch{ $("promptOut").select(); toast("請按 Ctrl/⌘+C 複製"); } };
 $("applyAnswer").onclick = () => {
   const st=$("status"); st.className="status";
@@ -685,6 +715,12 @@ $("dest").placeholder = "例：北海道 札幌・小樽・富良野";
 render();
 loadRepoTrip();
 (async () => {
+  try { const r = await fetch("/api/health",{cache:"no-store"}); agent = r.ok ? await r.json() : null; } catch { agent = null; }
+  if (agent?.ok){
+    $("go").textContent="產生行程（本機 agent，約 7 分鐘）";
+    $("modeNote").textContent="已連上這台電腦的 agent：會實查機票、じゃらん房價、官方時刻表與景點照片，用你的 Claude Code 訂閱額度，完成後自動打開。結果只存在這台電腦（trips/ 資料夾），不會上傳。";
+    renderSaved(localDocs()); return;
+  }
   const manualMode = () => { $("go").textContent="產生提示詞"; $("modeNote").textContent="這個網址不能直接呼叫 Claude：按下後會產生提示詞，貼到你的 Claude（不需 API 金鑰），再把回覆貼回來。已存的行程只存在這台裝置的瀏覽器，也可下載 trip.json。"; renderSaved(localDocs()); };
   if (!window.claude?.use){ manualMode(); return; }
   const [s, d, dl] = await Promise.all([claude.use("sample"), claude.use("db"), claude.use("downloads")]);
