@@ -146,7 +146,7 @@ SCOUTS = {
                 '{"legs": {"YYYY-MM-DD": [與 trip.json days[].legs 同結構的陣列，每段恰好一個 rec=true，src 放官方當日時刻表網址]}, "passes": [可省略], "sources": ["網址"]}',
                 "依初稿每日行程，查主要移動段落（機場進出、城市間）旅遊當天的官方時刻；市區巴士地鐵只寫發車頻率。JR 西日本用 timetable.jr-odekake.net。"),
     "local": ("景點與活動", 8,
-              '{"days": {"YYYY-MM-DD": {"items": [...], "food": [...], "tips": [...], "mapStops": [...]}}, "costs": [與 trip.json costs 同結構], "checklist": [...], "sources": ["網址"]}',
+              '{"days": {"YYYY-MM-DD": {"items": [...], "food": [...], "tips": [...], "mapStops": [...], "map": [與 trip.json days[].map 同結構，sub 的時間要和 items 一致]}}, "costs": [與 trip.json costs 同結構], "checklist": [...], "sources": ["網址"]}',
               "確認主要景點在旅遊日期的營業時間、門票、當週活動；不要大改每天去的城市，只修正時間、票價與順序。"),
 }
 
@@ -345,7 +345,7 @@ def apply_patch(t, name, p):
     elif name == "local" and isinstance(p.get("days"), dict):
         for day in t["days"]:
             for k, v in (p["days"].get(day["date"]) or {}).items():
-                if k in ("items", "food", "tips", "mapStops") and isinstance(v, list):
+                if k in ("items", "food", "tips", "mapStops", "map") and isinstance(v, list):
                     day[k] = v
         for k in ("costs", "checklist"):
             if isinstance(p.get(k), list) and p[k]:

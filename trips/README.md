@@ -38,7 +38,10 @@ trips/<slug>/
     "legs":[{"leg":"A → B（路線）","src":"官方當日時刻表網址",
       "options":[{"dep":"08:38","arr":"10:39","train":"はしだて1号","no":"5081M","pf":"31","apf":"","rec":true,"note":"為何建議"}],
       "tip":"轉乘陷阱"}],
-    "food":["…"],"tips":["寄物櫃/營業時間/票券"],"mapStops":["Google 地圖可搜的地名（當地語言）"]}],
+    "food":["…"],"tips":["寄物櫃/營業時間/票券"],"mapStops":["Google 地圖可搜的地名（當地語言）"],
+    "map":[{"label":"地圖短名","sub":"09:00 重點","icon":"選填 emoji","query":"Google 地圖搜尋名","x":0,"y":0}],
+    "pois":[{"type":"food|locker","label":"…","sub":"…","x":0,"y":0,"fx":0,"fy":0,"query":"…"}]}],
+  "route": [{"label":"KIX","icon":"✈","date":"10/14","hot":false,"query":"選填"}],
   "costs": [{"cat":"交通|門票與活動|其他","label":"…","local":0,"note":"算法","optional":false}],
   "foodLevels": {"save":3500,"normal":5500,"loose":8000},
   "checklist": ["使用者自己要做的事"]
@@ -49,3 +52,9 @@ trips/<slug>/
 - `costs` 不含機票、住宿、餐費（網頁另外計算）。金額為全員合計的當地貨幣。
 - `options` 每段恰好一個 `rec: true`；`no`、`pf`、`apf` 只填查證過的值，否則空字串。
 - `rec`/`optional` 必須是 boolean，`pf`/`apf` 必須是字串（寫完用 Python assert 檢查）。
+
+## 圖像化（選填）
+- `route`：整趟路線 SVG 的節點（依序，含進出機場）。沒填時用「抵達機場 → 每段住宿城市 → 回程機場」自動產生。
+- `days[].map`：每日路線 SVG 的站點。`x`、`y` 是 0–100 的手排座標（關西行程沿用 flight-tracker_1 的位置）；沒填座標就自動鋸齒排版。沒有 `map` 時改用 `mapStops`，時間從 `items` 對出來。
+- `days[].pois`：🍜 美食／🧳 寄物的支線，`x,y` 是點的位置、`fx,fy` 是連回路線的點；只在手排座標時使用。
+- 有每日地圖時，`items` 會收進「文字行程」摺疊區，畫面以圖為主。
