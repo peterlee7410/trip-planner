@@ -105,15 +105,57 @@ def draft_prompt(a):
    例如金澤可比較小松 KMQ（巴士 40 分）與關西 KIX（鐵路約 3 小時）。程式會實查兩邊機票，連同交通時間與費用一起比較。"""
 
 
-def split_schema():
-    """把網頁的 SCHEMA 拆成「骨架」（每天只有日期／主題／住宿）和「單日細節」兩份，兩者都沿用同一份欄位定義。"""
+EXTRA_KEYS = ("passes", "costs", "foodLevels", "checklist")
+
+
+def schema_parts():
+    """把網頁的 SCHEMA 拆成四份（都沿用同一份欄位定義）：
+    core＝核心骨架（其他部分都依賴它，要短：每天只有日期／主題／住宿，住宿不含候選飯店）；
+    day_obj＝單日細節；extras＝費用、票券、餐費、待辦；stays＝住宿候選。後三者在骨架之後同時產生。"""
     s = schema()
     i, j = s.index(' "days": ['), s.index(' "route":')
     block = s[i:j]
     day_obj = block[block.index("[") + 1: block.rstrip().rstrip(",").rstrip().rindex("]")]
-    skeleton = s[:i] + (' "days": [{"date":"YYYY-MM-DD","title":"當日主題","base":"當晚住哪個城市/區域",'
-                        '"area":"當天主要去的區域與景點（30 字內）"}],\n') + s[j:]
-    return skeleton, day_obj
+    s = s[:i] + (' "days": [{"date":"YYYY-MM-DD","title":"當日主題","base":"當晚住哪個城市/區域",'
+                 '"area":"當天主要去的區域與景點（30 字內）"}],\n') + s[j:]
+    lines = s.split("\n")
+    extra = [l for l in lines if any(l.startswith(f' "{k}"') for k in EXTRA_KEYS)]
+    stays = next(l for l in lines if l.startswith(' "stays"'))
+    core = [re.sub(r',"candidates":\[.*\]\}\],?$', '}],', l) if l.startswith(' "stays"') else l
+            for l in lines if l not in extra]
+    core[-2] = core[-2].rstrip().rstrip(",")  # 拿掉最後一個 key 後，前一行的逗號收掉
+    return "\n".join(core), day_obj, "{\n" + "\n".join(extra).rstrip(",") + "\n}", "{" + stays.rstrip(",") + "}"
+
+
+def merge_draft_parts(t, extras, stays):
+    """把平行產生的費用／待辦與住宿候選併回骨架；失敗的部分補空值（網頁與驗證都要這些欄位存在）。"""
+    extras = extras if isinstance(extras, dict) else {}
+    for k in EXTRA_KEYS:
+        default = {} if k == "foodLevels" else []
+        v = extras.get(k)
+        t[k] = v if isinstance(v, type(default)) else default
+    got = {s.get("checkin"): s.get("candidates") for s in ((stays or {}).get("stays") or []) if isinstance(s, dict)}
+    for s in t.get("stays", []):
+        c = got.get(s.get("checkin"))
+        s["candidates"] = c if isinstance(c, list) else []
+
+
+def extras_prompt(a, skel, fmt):
+    return f"""你是資深自由行規劃師。依下面的旅程骨架（{a.dest}，{a.start}–{a.end}，{a.travelers} 人，總預算 NT${a.budget}），
+產生交通票券、費用、餐費等級與出發前待辦。不要使用任何工具。只回覆一個 JSON 物件，不要其他文字，格式：
+{fmt}
+規則：價格用一般水準估計，寧可略高；costs 不含機票、住宿、餐費，金額為全員合計的當地幣；local 一律是數字，optional 一律是 boolean。
+骨架：{json.dumps({k: skel.get(k) for k in ("title", "currency", "flights", "stays", "days")}, ensure_ascii=False)}"""
+
+
+def stays_prompt(a, skel, fmt):
+    return f"""你是資深自由行規劃師。依下面的旅程骨架（{a.dest}，{a.travelers} 人），替每一段住宿挑 2–3 間真實存在的候選
+（交通方便、獨立衛浴優先、在預算內；每晚每間上限約 NT${a.hotel_budget or '不限'}）。不要使用任何工具。
+只回覆一個 JSON 物件，不要其他文字，格式：
+{fmt}
+規則：city／checkin／checkout／area／station 照抄骨架，只補 candidates；estLocalPerNight 是每間每晚的當地幣數字，不確定就 null。
+骨架的 stays：{json.dumps(skel.get("stays"), ensure_ascii=False)}
+其他：{a.notes or "無"}"""
 
 
 def day_prompt(a, skel, day):
@@ -134,16 +176,28 @@ def day_prompt(a, skel, day):
 
 
 def make_draft(a, d):
-    """先產生骨架（約 1 分鐘），再平行產生每天細節（每天約 1 分鐘）：天數多也維持約 2 分鐘。"""
+    """先產生核心骨架（短），再把「每天細節」「費用與待辦」「住宿候選」同時產生：天數多也維持約 2 分鐘。"""
     global _DAY_OBJ
-    skeleton, _DAY_OBJ = split_schema()
-    text, to = run_claude(draft_prompt(a).replace(schema(), skeleton), timeout=a.draft_timeout)
+    core, _DAY_OBJ, extras_fmt, stays_fmt = schema_parts()
+    core_prompt = draft_prompt(a).replace(schema(), core) + (
+        "\n9. 這一步只產生上面格式裡有的欄位（要短）；住宿候選飯店、費用、票券、餐費、待辦與每天細節會另外產生，不要寫。")
+    text, to = run_claude(core_prompt, timeout=a.draft_timeout)
     if to:
         log("初稿骨架逾時")
         raise SystemExit(1)
     t = extract_json(text)
     days = t.get("days") or []
-    log(f"初稿骨架完成：{len(days)} 天，平行產生每天細節…")
+    log(f"初稿骨架完成：{len(days)} 天，平行產生每天細節、費用與待辦、住宿候選…")
+
+    def part(prompt, what):
+        text, to = run_claude(prompt, timeout=a.draft_timeout)
+        try:
+            if not to:
+                return extract_json(text)
+        except Exception:
+            pass
+        log(f"{what}{'逾時' if to else '格式不對'}，先留空，查證階段再補")
+        return None
 
     def detail(day):
         for attempt in (1, 2):
@@ -156,8 +210,11 @@ def make_draft(a, d):
             log(f"{day['date']} 細節第 {attempt} 次{'逾時' if to else '格式不對'}")
         return {**day, "items": [day.get("area", "")], "legs": []}  # 保底：查證階段再補
 
-    with cf.ThreadPoolExecutor(min(6, max(1, len(days)))) as ex:
+    with cf.ThreadPoolExecutor(min(8, len(days) + 2)) as ex:
+        f_extras = ex.submit(part, extras_prompt(a, t, extras_fmt), "費用與待辦")
+        f_stays = ex.submit(part, stays_prompt(a, t, stays_fmt), "住宿候選")
         t["days"] = list(ex.map(detail, days))
+        merge_draft_parts(t, f_extras.result(), f_stays.result())
     t["meta"] = {"destination": a.dest, "origin": a.origin, "start": a.start, "end": a.end,
                  "travelers": a.travelers, "budgetTwd": a.budget, "source": "ai",
                  "generatedAt": dt.date.today().isoformat()}
@@ -412,9 +469,13 @@ def apply_patch(t, name, p):
             for k, v in ((p.get("days") or {}).get(day["date"]) or {}).items():
                 if k in ("items", "food", "tips", "mapStops", "map") and isinstance(v, list):
                     day[k] = v
-        for k in ("costs", "checklist"):
-            if isinstance(p.get(k), list) and p[k]:
-                t[k] = p[k]
+        # 查證員常只寫它更正或新增的項目：費用依 label 合併（同名更新、新的加入、沒提到的保留），待辦取聯集
+        if isinstance(p.get("costs"), list) and p["costs"]:
+            costs = {c.get("label"): c for c in t.get("costs", [])}
+            costs.update({c.get("label"): c for c in p["costs"] if isinstance(c, dict)})
+            t["costs"] = list(costs.values())
+        if isinstance(p.get("checklist"), list) and p["checklist"]:
+            t["checklist"] = list(dict.fromkeys([*t.get("checklist", []), *p["checklist"]]))
     else:
         return False
     return True

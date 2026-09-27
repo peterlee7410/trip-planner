@@ -194,15 +194,33 @@ def test_feasible_checks_both_ends():
     assert not pt.feasible("2026-11-21", "10:00", "2026-11-22", "07:15", 180)   # 要凌晨出發去機場
 
 
-def test_split_schema_keeps_day_details_out_of_skeleton():
-    skeleton, day = pt.split_schema()
-    assert '"area"' in skeleton and '"legs"' not in skeleton and '"route"' in skeleton and '"stays"' in skeleton
-    assert day.startswith('{"date"') and '"legs"' in day and '"map"' in day and day.rstrip().endswith("}")
+def test_schema_parts_split_core_details_extras_stays():
+    core, day, extras, stays = pt.schema_parts()
+    # 核心骨架：其他部分都要依賴的內容，要短
+    assert '"area"' in core and '"route"' in core and '"stays"' in core and '"flights"' in core
+    for k in ('"legs"', '"costs"', '"checklist"', '"foodLevels"', '"passes"', '"candidates"'):
+        assert k not in core, k
+    # 單日細節、費用與待辦、住宿候選各一份，和核心骨架同時產生
+    assert day.startswith('{"date"') and '"legs"' in day and '"map"' in day
+    assert all(k in extras for k in ('"costs"', '"passes"', '"foodLevels"', '"checklist"'))
+    assert '"candidates"' in stays and '"checkin"' in stays
+
+
+def test_merge_extras_and_stays_with_fallbacks():
+    t = {"stays": [{"city": "金澤", "checkin": "2026-11-21", "checkout": "2026-11-22"}]}
+    pt.merge_draft_parts(t, {"costs": [{"label": "門票", "local": 640}], "checklist": ["訂位"]},
+                         {"stays": [{"checkin": "2026-11-21", "candidates": [{"name": "APA"}]}]})
+    assert t["costs"][0]["label"] == "門票" and t["checklist"] == ["訂位"]
+    assert t["passes"] == [] and t["foodLevels"] == {}          # 沒給的補空值，驗證才過得了
+    assert t["stays"][0]["candidates"][0]["name"] == "APA"
+    t2 = {"stays": [{"city": "金澤", "checkin": "2026-11-21", "checkout": "2026-11-22"}]}
+    pt.merge_draft_parts(t2, None, None)                        # 兩份都失敗
+    assert t2["costs"] == [] and t2["stays"][0]["candidates"] == []
 
 
 def test_day_prompt_marks_first_and_last_day():
     a = Namespace(dest="金澤", start="2026-11-21", end="2026-11-22", travelers=2, origin="TPE", notes="")
-    pt._DAY_OBJ = pt.split_schema()[1]
+    pt._DAY_OBJ = pt.schema_parts()[1]
     skel = {"title": "t", "flights": {}, "stays": [], "days": []}
     first = pt.day_prompt(a, skel, {"date": "2026-11-21", "title": "抵達"})
     last = pt.day_prompt(a, skel, {"date": "2026-11-22", "title": "返程"})
@@ -227,3 +245,17 @@ def test_partial_local_patch_keeps_costs():
     ok = pt.apply_patch(t, "local", {"costs": [{"cat": "門票與活動", "label": "東大寺", "local": 1600, "optional": False}]})
     assert ok and t["costs"][0]["label"] == "東大寺" and t["days"][0]["items"] == ["初稿"]
     assert pt.apply_patch(t, "local", {"sources": []}) is False
+
+
+def test_local_patch_merges_costs_instead_of_replacing():
+    # 景點查證只寫出它更正的那一項，初稿其他費用不能被蓋掉
+    t = {"days": [], "checklist": ["訂機票"], "costs": [
+        {"cat": "交通", "label": "JR 關西廣域券", "local": 24000, "optional": False},
+        {"cat": "門票與活動", "label": "東大寺（大佛殿）參拜券", "local": 1200, "optional": False}]}
+    pt.apply_patch(t, "local", {"costs": [
+        {"cat": "門票與活動", "label": "東大寺（大佛殿）參拜券", "local": 1600, "optional": False},
+        {"cat": "門票與活動", "label": "伊根灣遊覽船", "local": 2400, "optional": False}],
+        "checklist": ["訂機票", "預約接駁"]})
+    assert [(c["label"], c["local"]) for c in t["costs"]] == [
+        ("JR 關西廣域券", 24000), ("東大寺（大佛殿）參拜券", 1600), ("伊根灣遊覽船", 2400)]
+    assert t["checklist"] == ["訂機票", "預約接駁"]
