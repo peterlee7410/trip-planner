@@ -540,7 +540,7 @@ def decide_flights(a, d, by_airport, draft):
 
 
 RECONCILE = """下面是一份旅程 JSON，各段由不同人分別查證，可能互相矛盾。只檢查並修正：
-1. 第一天機場進城的交通時刻要在去程班機抵達（flights.outbound.arr，若沒有就看 flights.advice）之後 30–90 分鐘內出發；
+1. 第一天機場進城的交通時刻要在去程班機抵達（flights.outbound.arr，若沒有就看 flights.advice）之後 45–90 分鐘內出發（入境與領行李至少 45 分）；
 2. 最後一天去機場的交通要在回程班機起飛（flights.return.dep）前至少 2 小時抵達機場；
 3. 第一天與最後一天 items 的時間要和上述一致，不要安排在飛機起飛後或抵達前的活動；
 4. 機場段 legs 要用 flights.arriveAirport／departAirport 這個機場。如果原本寫的是別的機場，就改寫成這個機場到住宿區的一般路線
