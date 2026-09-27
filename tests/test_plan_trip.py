@@ -192,3 +192,38 @@ def test_feasible_checks_both_ends():
     assert pt.feasible("2026-11-21", "17:10", "2026-11-22", "23:10", 180)
     assert not pt.feasible("2026-11-21", "21:45", "2026-11-22", "23:10", 180)   # 到不了
     assert not pt.feasible("2026-11-21", "10:00", "2026-11-22", "07:15", 180)   # 要凌晨出發去機場
+
+
+def test_split_schema_keeps_day_details_out_of_skeleton():
+    skeleton, day = pt.split_schema()
+    assert '"area"' in skeleton and '"legs"' not in skeleton and '"route"' in skeleton and '"stays"' in skeleton
+    assert day.startswith('{"date"') and '"legs"' in day and '"map"' in day and day.rstrip().endswith("}")
+
+
+def test_day_prompt_marks_first_and_last_day():
+    a = Namespace(dest="金澤", start="2026-11-21", end="2026-11-22", travelers=2, origin="TPE", notes="")
+    pt._DAY_OBJ = pt.split_schema()[1]
+    skel = {"title": "t", "flights": {}, "stays": [], "days": []}
+    first = pt.day_prompt(a, skel, {"date": "2026-11-21", "title": "抵達"})
+    last = pt.day_prompt(a, skel, {"date": "2026-11-22", "title": "返程"})
+    assert "機場進城" in first and "回機場" not in first
+    assert "回機場" in last and "機場進城" not in last
+
+
+def test_pool_widens_when_station_name_does_not_match():
+    # 「難波駅」的飯店多寫「なんば駅 徒歩3分」，對不到漢字站名 → stationWalk 抓不到；合格不到 3 間時改用步行分鐘補
+    H = lambda n, t, **k: {"yad": n, "name": n, "total": t, "shared": False, "rating": 4, **k}
+    hotels = [H("なんばA", 20000, walkMin=3, stationWalk=None, busMin=None),
+              H("なんばB", 18000, walkMin=8, stationWalk=None, busMin=None),
+              H("郊外", 9000, walkMin=None, stationWalk=None, busMin=None),
+              H("遠い", 8000, walkMin=25, stationWalk=None, busMin=None),
+              H("膠囊", 5000, walkMin=2, stationWalk=None, busMin=None, **{"shared": True})]
+    assert [h["name"] for h in pt.pool_for(hotels)] == ["なんばB", "なんばA"]
+
+
+def test_partial_local_patch_keeps_costs():
+    # 時間到只寫出 costs、還沒寫 days：已查到的門票費用也要採用
+    t = {"days": [{"date": "2026-10-14", "items": ["初稿"]}], "costs": [], "checklist": []}
+    ok = pt.apply_patch(t, "local", {"costs": [{"cat": "門票與活動", "label": "東大寺", "local": 1600, "optional": False}]})
+    assert ok and t["costs"][0]["label"] == "東大寺" and t["days"][0]["items"] == ["初稿"]
+    assert pt.apply_patch(t, "local", {"sources": []}) is False

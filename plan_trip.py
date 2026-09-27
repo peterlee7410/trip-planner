@@ -32,6 +32,7 @@ import validate  # noqa: E402
 
 CLAUDE = shutil.which("claude") or "claude"
 T0 = time.monotonic()
+_DAY_OBJ = ""  # make_draft 從網頁 SCHEMA 拆出來的單日細節格式
 
 
 def log(msg):
@@ -40,7 +41,9 @@ def log(msg):
 
 def run_claude(prompt, timeout, tools=(), cwd=ROOT):
     """跑一次 claude -p（prompt 走 stdin）；逾時就砍掉整個程序樹。回傳 (結果文字, 是否逾時)。"""
+    # 不載入 MCP 伺服器、外掛與使用者設定：每次啟動從約 35 秒降到約 7 秒（工具都用下面明確列的，WebSearch/WebFetch 是內建）
     cmd = [CLAUDE, "-p", "--output-format", "json", "--model", "sonnet",
+           "--strict-mcp-config", "--mcp-config", '{"mcpServers":{}}', "--setting-sources", "",
            "--permission-mode", "acceptEdits",
            "--disallowedTools", "Bash(git commit:*)", "Bash(git push:*)", "Bash(git add:*)"]
     if tools:
@@ -102,11 +105,59 @@ def draft_prompt(a):
    例如金澤可比較小松 KMQ（巴士 40 分）與關西 KIX（鐵路約 3 小時）。程式會實查兩邊機票，連同交通時間與費用一起比較。"""
 
 
+def split_schema():
+    """把網頁的 SCHEMA 拆成「骨架」（每天只有日期／主題／住宿）和「單日細節」兩份，兩者都沿用同一份欄位定義。"""
+    s = schema()
+    i, j = s.index(' "days": ['), s.index(' "route":')
+    block = s[i:j]
+    day_obj = block[block.index("[") + 1: block.rstrip().rstrip(",").rstrip().rindex("]")]
+    skeleton = s[:i] + (' "days": [{"date":"YYYY-MM-DD","title":"當日主題","base":"當晚住哪個城市/區域",'
+                        '"area":"當天主要去的區域與景點（30 字內）"}],\n') + s[j:]
+    return skeleton, day_obj
+
+
+def day_prompt(a, skel, day):
+    brief = {k: skel.get(k) for k in ("title", "summary", "flights", "stays", "days")}
+    first, last = day["date"] == a.start, day["date"] == a.end
+    return f"""你是資深自由行規劃師。下面是整趟旅程的骨架（{a.dest}，{a.start}–{a.end}，{a.travelers} 人，出發 {a.origin}）：
+{json.dumps(brief, ensure_ascii=False)}
+
+只替 {day["date"]}（{day.get("title", "")}，當晚住 {day.get("base", "")}，主要去 {day.get("area", "")}）產生當天細節。
+不要使用任何工具。只回覆一個 JSON 物件，不要其他文字，格式：
+{_DAY_OBJ}
+規則：
+1. date 填 {day["date"]}，title／base 沿用骨架；和前後天的住宿與城市一致。
+2. {"第一天：含機場進城，班機時間照 flights。" if first else ""}{"最後一天：含回機場，預留國際線 3 小時。" if last else ""}
+3. legs 只放需要搭車的段落，每段 2–3 個 options，恰好一個 rec=true；no/pf/apf 不確定就留空字串。
+4. items 3–6 條、每條 40 字內；food 與 tips 各最多 3 條；map 3–7 站，sub 的時間要和 items 一致。
+5. 其他：{a.notes or "無"}"""
+
+
 def make_draft(a, d):
-    text, to = run_claude(draft_prompt(a), timeout=a.draft_timeout)
+    """先產生骨架（約 1 分鐘），再平行產生每天細節（每天約 1 分鐘）：天數多也維持約 2 分鐘。"""
+    global _DAY_OBJ
+    skeleton, _DAY_OBJ = split_schema()
+    text, to = run_claude(draft_prompt(a).replace(schema(), skeleton), timeout=a.draft_timeout)
     if to:
-        raise SystemExit("初稿逾時")
+        log("初稿骨架逾時")
+        raise SystemExit(1)
     t = extract_json(text)
+    days = t.get("days") or []
+    log(f"初稿骨架完成：{len(days)} 天，平行產生每天細節…")
+
+    def detail(day):
+        for attempt in (1, 2):
+            text, to = run_claude(day_prompt(a, t, day), timeout=a.draft_timeout)
+            try:
+                if not to:
+                    return {**day, **extract_json(text), "date": day["date"]}
+            except Exception:
+                pass
+            log(f"{day['date']} 細節第 {attempt} 次{'逾時' if to else '格式不對'}")
+        return {**day, "items": [day.get("area", "")], "legs": []}  # 保底：查證階段再補
+
+    with cf.ThreadPoolExecutor(min(6, max(1, len(days)))) as ex:
+        t["days"] = list(ex.map(detail, days))
     t["meta"] = {"destination": a.dest, "origin": a.origin, "start": a.start, "end": a.end,
                  "travelers": a.travelers, "budgetTwd": a.budget, "source": "ai",
                  "generatedAt": dt.date.today().isoformat()}
@@ -240,7 +291,7 @@ def run_jalan(a, d, t):
             continue
         (d / "research" / f"jalan-{s['checkin']}.json").write_text(
             json.dumps(r, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-        pool = {**r, "hotels": hotel_pool(r["hotels"])[:12]}
+        pool = {**r, "hotels": pool_for(r["hotels"])[:12]}
         (d / "research" / f"jalan-pool-{s['checkin']}.json").write_text(
             json.dumps(pool, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
         log(f"住宿實查 {st} {s['checkin']}：{len(r['hotels'])} 間有空房，合格 {len(pool['hotels'])} 間")
@@ -259,6 +310,17 @@ def hotel_pool(hotels, max_walk=15, max_bus=25):
         return ((h["stationWalk"] is not None and h["stationWalk"] <= max_walk)
                 or (h.get("busMin") is not None and h["busMin"] <= max_bus))
     return sorted(filter(ok, hotels), key=lambda h: h["total"])
+
+
+def pool_for(hotels, want=3, max_walk=10):
+    """合格清單不到 want 間時放寬：補上非共用、寫著步行 max_walk 分內的（站名寫法不同時抓不到 stationWalk，例：なんば／難波）。"""
+    pool = hotel_pool(hotels)
+    if len(pool) < want:
+        have = {h["yad"] for h in pool}
+        pool += [h for h in hotels if h["yad"] not in have and not h.get("shared")
+                 and h.get("walkMin") is not None and h["walkMin"] <= max_walk]
+        pool.sort(key=lambda h: h["total"])
+    return pool
 
 
 def pick_hotels(pool, n=3, cap=1.6):
@@ -281,7 +343,7 @@ def auto_pick_stays(a, d, t):
             stays.append(s)
             continue
         r = json.loads(f.read_text(encoding="utf-8"))
-        pick = pick_hotels(hotel_pool(r["hotels"])) or sorted(
+        pick = pick_hotels(pool_for(r["hotels"])) or sorted(
             [h for h in r["hotels"] if not h["shared"]], key=lambda h: h["total"])[:3]
         stays.append({**s, "candidates": [{
             "name": h["name"], "estLocalPerNight": round(h["total"] / r["nights"] / rooms), "yad": h["yad"],
@@ -343,9 +405,11 @@ def apply_patch(t, name, p):
                 day["legs"] = p["legs"][day["date"]]
         if isinstance(p.get("passes"), list) and p["passes"]:
             t["passes"] = p["passes"]
-    elif name == "local" and isinstance(p.get("days"), dict):
+    elif name == "local" and (isinstance(p.get("days"), dict)
+                              or any(isinstance(p.get(k), list) and p[k] for k in ("costs", "checklist"))):
+        # 時間到可能只寫出一部分（例如只有 costs），有什麼就收什麼
         for day in t["days"]:
-            for k, v in (p["days"].get(day["date"]) or {}).items():
+            for k, v in ((p.get("days") or {}).get(day["date"]) or {}).items():
                 if k in ("items", "food", "tips", "mapStops", "map") and isinstance(v, list):
                     day[k] = v
         for k in ("costs", "checklist"):

@@ -666,7 +666,8 @@ async function runAgent(req){
       if (job.status==="done"){ st.textContent="完成，正在打開新行程…"; location.href=`?trip=${encodeURIComponent(job.slug)}`; return; }
       if (job.status!=="running"){
         st.className="status err";
-        st.textContent = job.status==="cancelled" ? "已停止。" : `產生失敗：${step(job.log)}（完整紀錄在執行 agent_server.py 的視窗）`;
+        const why = [...job.log].reverse().find(x=>x.trim()) || "";
+        st.textContent = job.status==="cancelled" ? "已停止。" : `產生失敗：${why.replace(/^\[\s*\d+s\]\s*/,"")||step(job.log)}`;
         return;
       }
     }
