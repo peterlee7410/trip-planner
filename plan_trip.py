@@ -585,6 +585,16 @@ def reconcile(a, d, deadline_at):
     return True
 
 
+def find_photos(t):
+    """用站點名稱查維基百科代表圖；回傳 {日期: photos}。只改 photos，不碰其他欄位（一致性整合同時在改 trip.json）。"""
+    sys.path.insert(0, str(ROOT / "tools"))
+    import wiki_photos
+    cache = wiki_photos.load_cache()
+    wiki_photos.annotate(t, cache=cache)
+    wiki_photos.save_cache(cache)
+    return {day["date"]: day.get("photos", []) for day in t["days"]}
+
+
 def update_index(a, t):
     ip = TRIPS / "index.json"
     idx = [x for x in json.loads(ip.read_text(encoding="utf-8")) if x["slug"] != a.slug]
@@ -637,8 +647,20 @@ def main():
     if apply_flight_price(d, pick, compare):
         applied.append("flightPrice")
         add_ground_cost(a, d, t, pick)
-    reconcile(a, d, deadline_at)
+    with cf.ThreadPoolExecutor(1) as ex:  # 實景照片（維基百科）和一致性整合同時跑，不多花時間
+        photos = ex.submit(find_photos, json.loads((d / "trip.json").read_text(encoding="utf-8")))
+        reconcile(a, d, deadline_at)
+        try:
+            by_date = photos.result(timeout=max(1, deadline_at - time.monotonic()))
+        except Exception as e:
+            by_date = {}
+            log(f"實景照片：略過（{str(e)[:60] or '逾時'}）")
     t = json.loads((d / "trip.json").read_text(encoding="utf-8"))
+    for day in t["days"]:
+        day["photos"] = by_date.get(day["date"], [])
+    if by_date:
+        (d / "trip.json").write_text(json.dumps(t, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        log(f"實景照片：{sum(map(len, by_date.values()))} 張（Wikimedia Commons）")
     update_index(a, t)
     errs = validate.check(a.slug)
     log(f"完成：已查證 {applied or '無'}；驗證 {'OK' if not errs else '；'.join(errs[:3])}")

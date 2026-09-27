@@ -290,25 +290,29 @@
      "label": "新世界",
      "sub": "動物園前1號口",
      "x": 40,
-     "y": 76
+     "y": 76,
+     "query": "新世界 (大阪市)"
     },
     {
      "label": "八阪神社",
      "sub": "難波32號口",
      "x": 58,
-     "y": 58
+     "y": 58,
+     "query": "難波八阪神社"
     },
     {
      "label": "道頓堀",
      "sub": "步行北上",
      "x": 73,
-     "y": 38
+     "y": 38,
+     "query": "道頓堀"
     },
     {
      "label": "心齋橋",
      "sub": "購物",
      "x": 90,
-     "y": 20
+     "y": 20,
+     "query": "心斎橋筋"
     }
    ],
    "pois": [
@@ -341,6 +345,22 @@
      "fx": 27,
      "fy": 55,
      "query": "RTI Tennoji luggage storage"
+    }
+   ],
+   "photos": [
+    {
+     "name": "天王寺",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Abeno_Harukas_Osaka_Japan01-r.jpg/960px-Abeno_Harukas_Osaka_Japan01-r.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:Abeno_Harukas_Osaka_Japan01-r.jpg",
+     "artist": "Oilstreet",
+     "license": "CC BY 2.5"
+    },
+    {
+     "name": "難波八阪神社",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/50/Namba-yasaka-jinja_haiden1.jpg/960px-Namba-yasaka-jinja_haiden1.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:Namba-yasaka-jinja_haiden1.jpg",
+     "artist": "KENPEI",
+     "license": "CC BY-SA 3.0"
     }
    ]
   },
@@ -444,25 +464,29 @@
      "label": "天橋立站",
      "sub": "¥800大型櫃",
      "x": 40,
-     "y": 34
+     "y": 34,
+     "query": "天橋立"
     },
     {
      "label": "智恩寺",
      "sub": "迴旋橋",
      "x": 55,
-     "y": 62
+     "y": 62,
+     "query": "智恩寺"
     },
     {
      "label": "View Land",
      "sub": "纜車",
      "x": 68,
-     "y": 24
+     "y": 24,
+     "query": "天橋立ビューランド"
     },
     {
      "label": "天橋立站",
      "sub": "取行李上接駁",
      "x": 82,
-     "y": 50
+     "y": 50,
+     "query": "天橋立"
     },
     {
      "label": "與謝荘",
@@ -491,6 +515,22 @@
      "fx": 40,
      "fy": 34,
      "query": "天橋立駅 コインロッカー"
+    }
+   ],
+   "photos": [
+    {
+     "name": "天橋立",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/51/Amanohashidate_view_from_Kasamatsu_Park01s3s4410.jpg/960px-Amanohashidate_view_from_Kasamatsu_Park01s3s4410.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:Amanohashidate_view_from_Kasamatsu_Park01s3s4410.jpg",
+     "artist": "663highland",
+     "license": "CC BY 2.5"
+    },
+    {
+     "name": "天橋立ビューランド",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/89/Amanohashidate_View_Land07n4592.jpg/960px-Amanohashidate_View_Land07n4592.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:Amanohashidate_View_Land07n4592.jpg",
+     "artist": "663highland",
+     "license": "CC BY 2.5"
     }
    ]
   },
@@ -645,25 +685,29 @@
      "label": "天橋立站",
      "sub": "寄櫃→巴士",
      "x": 17,
-     "y": 52
+     "y": 52,
+     "query": "天橋立"
     },
     {
      "label": "日出碼頭",
      "sub": "遊覽船",
      "x": 29,
-     "y": 20
+     "y": 20,
+     "query": "伊根湾"
     },
     {
      "label": "伊根舟屋",
      "sub": "午餐",
      "x": 41,
-     "y": 46
+     "y": 46,
+     "query": "伊根の舟屋"
     },
     {
      "label": "天橋立站",
      "sub": "15:51特急",
      "x": 54,
-     "y": 74
+     "y": 74,
+     "query": "天橋立"
     },
     {
      "label": "京都住宿",
@@ -675,13 +719,15 @@
      "label": "嵯峨嵐山",
      "sub": "JR 15分",
      "x": 82,
-     "y": 76
+     "y": 76,
+     "query": "嵐山"
     },
     {
      "label": "月灯路",
      "sub": "20:40前入場",
      "x": 95,
-     "y": 34
+     "y": 34,
+     "query": "竹林の小径"
     }
    ],
    "pois": [
@@ -714,6 +760,29 @@
      "fx": 17,
      "fy": 52,
      "query": "天橋立駅 コインロッカー"
+    }
+   ],
+   "photos": [
+    {
+     "name": "伊根湾",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c1/Ine_Bay_and_Aoshima_in_Ine_Town_Yosa_District%2C_Kyoto_Prefecture_001.jpg/960px-Ine_Bay_and_Aoshima_in_Ine_Town_Yosa_District%2C_Kyoto_Prefecture_001.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:Ine_Bay_and_Aoshima_in_Ine_Town_Yosa_District,_Kyoto_Prefecture_001.jpg",
+     "artist": "Naokijp",
+     "license": "CC BY-SA 4.0"
+    },
+    {
+     "name": "伊根の舟屋",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bc/Funaya_in_Ine_Town%2C_Yosa_District%2C_Kyoto_Prefecture_003.jpg/960px-Funaya_in_Ine_Town%2C_Yosa_District%2C_Kyoto_Prefecture_003.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:Funaya_in_Ine_Town,_Yosa_District,_Kyoto_Prefecture_003.jpg",
+     "artist": "Naokijp",
+     "license": "CC BY-SA 4.0"
+    },
+    {
+     "name": "嵐山",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c1/Arashiyama_%288741759830%29.jpg/960px-Arashiyama_%288741759830%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:Arashiyama_(8741759830).jpg",
+     "artist": "Takeshi Kuboki from Amagasaki, Japan",
+     "license": "CC BY 2.0"
     }
    ]
   },
@@ -849,25 +918,29 @@
      "label": "清水寺",
      "sub": "7:20人少",
      "x": 18,
-     "y": 34
+     "y": 34,
+     "query": "清水寺"
     },
     {
      "label": "二年坂",
      "sub": "石板街",
      "x": 31,
-     "y": 66
+     "y": 66,
+     "query": "二寧坂"
     },
     {
      "label": "祇園四条",
      "sub": "京阪",
      "x": 44,
-     "y": 36
+     "y": 36,
+     "query": "祇園"
     },
     {
      "label": "下鴨神社",
      "sub": "糺之森",
      "x": 58,
-     "y": 26
+     "y": 26,
+     "query": "下鴨神社"
     },
     {
      "label": "京都站",
@@ -885,7 +958,8 @@
      "label": "姫島河堤",
      "sub": "17:00到・免費",
      "x": 95,
-     "y": 40
+     "y": 40,
+     "query": "淀川"
     }
    ],
    "pois": [
@@ -928,6 +1002,29 @@
      "fx": 5,
      "fy": 78,
      "query": "Sakura Terrace The Atelier Kyoto"
+    }
+   ],
+   "photos": [
+    {
+     "name": "清水寺",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ae/Kiyomizu-dera%2C_Kyoto%2C_November_2016_-02.jpg/960px-Kiyomizu-dera%2C_Kyoto%2C_November_2016_-02.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:Kiyomizu-dera,_Kyoto,_November_2016_-02.jpg",
+     "artist": "Martin Falbisoner",
+     "license": "CC BY-SA 4.0"
+    },
+    {
+     "name": "祇園",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/23/150124_Gion_Kyoto_Japan01s3.jpg/960px-150124_Gion_Kyoto_Japan01s3.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:150124_Gion_Kyoto_Japan01s3.jpg",
+     "artist": "663highland",
+     "license": "CC BY 2.5"
+    },
+    {
+     "name": "下鴨神社",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2d/R%C5%8Dmon%2C_Shimogamo-jinja.jpg/960px-R%C5%8Dmon%2C_Shimogamo-jinja.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:R%C5%8Dmon,_Shimogamo-jinja.jpg",
+     "artist": "Kakidai",
+     "license": "CC BY-SA 4.0"
     }
    ]
   },
@@ -1104,7 +1201,8 @@
      "label": "東大寺",
      "sub": "奈良公園",
      "x": 44,
-     "y": 25
+     "y": 25,
+     "query": "東大寺"
     },
     {
      "label": "JR奈良",
@@ -1116,13 +1214,15 @@
      "label": "JR宇治",
      "sub": "南口",
      "x": 75,
-     "y": 35
+     "y": 35,
+     "query": "宇治川"
     },
     {
      "label": "平等院",
      "sub": "表參道",
      "x": 91,
-     "y": 58
+     "y": 58,
+     "query": "平等院"
     }
    ],
    "pois": [
@@ -1155,6 +1255,22 @@
      "fx": 8,
      "fy": 70,
      "query": "RTI Tennoji luggage storage"
+    }
+   ],
+   "photos": [
+    {
+     "name": "東大寺",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a7/%E6%9D%B1%E5%A4%A7%E5%AF%BA_%E5%A4%A7%E4%BB%8F%E6%AE%BF%EF%BC%882024%E5%B9%B4%EF%BC%89.jpg/960px-%E6%9D%B1%E5%A4%A7%E5%AF%BA_%E5%A4%A7%E4%BB%8F%E6%AE%BF%EF%BC%882024%E5%B9%B4%EF%BC%89.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:%E6%9D%B1%E5%A4%A7%E5%AF%BA_%E5%A4%A7%E4%BB%8F%E6%AE%BF%EF%BC%882024%E5%B9%B4%EF%BC%89.jpg",
+     "artist": "Mont Blank rich",
+     "license": "CC0"
+    },
+    {
+     "name": "平等院",
+     "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/ba/Phoenix_Hall_in_Byodo-in_Temple%2C_Ujirenge_Uji_city_2026.jpg/960px-Phoenix_Hall_in_Byodo-in_Temple%2C_Ujirenge_Uji_city_2026.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+     "page": "https://commons.wikimedia.org/wiki/File:Phoenix_Hall_in_Byodo-in_Temple,_Ujirenge_Uji_city_2026.jpg",
+     "artist": "Tomio344456",
+     "license": "CC0"
     }
    ]
   },
@@ -1281,7 +1397,8 @@
      "fy": 38,
      "query": "Kansai Airport baggage storage"
     }
-   ]
+   ],
+   "photos": []
   }
  ],
  "costs": [

@@ -58,3 +58,6 @@ trips/<slug>/
 - `days[].map`：每日路線 SVG 的站點。`x`、`y` 是 0–100 的手排座標（關西行程沿用 flight-tracker_1 的位置）；沒填座標就自動鋸齒排版。沒有 `map` 時改用 `mapStops`，時間從 `items` 對出來。
 - `days[].pois`：🍜 美食／🧳 寄物的支線，`x,y` 是點的位置、`fx,fy` 是連回路線的點；只在手排座標時使用。
 - 有每日地圖時，`items` 會收進「文字行程」摺疊區，畫面以圖為主。
+- `days[].photos`：實景照片 `[{"name","src","page","artist","license"}]`，由 `python tools/wiki_photos.py --trip trips/<slug>` 或 `plan_trip.py` 自動產生。
+  只用維基百科頁面代表圖（Wikimedia Commons，CC／公有領域，附作者與授權），頁面要有座標；日文／中文站名只查日文維基百科；查不到就不放。
+  飯店、餐廳照片版權屬於業者，不嵌入，只在住宿卡片放「照片 ↗」連到じゃらん照片頁。

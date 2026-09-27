@@ -26,6 +26,7 @@
 | `.claude/commands/plan-trip.md`、`.claude/agents/` | `/plan-trip` 與 5 個分工 agent |
 | `plan_trip.py` | **快速規劃（10 分內）**：初稿 → 4 路平行查證（外部 timeout）＋ `tracker.py` 機票實查＋`tools/jalan_search.py` 住宿實價 → 程式合併 → 一致性整合。不 commit／push |
 | `tools/jalan_search.py` | じゃらん車站周邊一覽（含稅總價、從車站步行／巴士分鐘）；車站代碼快取在 `tools/jalan_codes.json` |
+| `tools/wiki_photos.py` | 景點實景照片（維基百科代表圖，Commons 自由授權、附作者）；`--trip trips/<slug>` 替每天加 photos；快取 `tools/wiki_photos_cache.json` |
 
 `plan_trip.py` 的挑選規則（改規則要同步改 `tests/test_plan_trip.py`）：
 - 航班：初稿給 1–2 個候選機場＋地面交通；每個機場各跑 tracker.py。排除到不了住宿地（落地+1h+交通 > 23:00）或回不了機場（< 07:00 出發）的班次、預設排除紅眼班（`--allow-redeye` 開放）；其餘以「機票＋地面交通 − 可用白天時數 × `--hour-value`（預設 NT$800／小時，全員）」最低者勝出。
